@@ -1,0 +1,3 @@
+package top.azimkin.multiMessageBridge.platforms.dispatchers
+
+interface BaseDispatcher

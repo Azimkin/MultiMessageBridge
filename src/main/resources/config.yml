@@ -1,0 +1,3 @@
+heads:
+  url: "https://crafthead.net/helm/%nickname%"
+  provider: "default"
