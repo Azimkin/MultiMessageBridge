@@ -10,7 +10,7 @@ Special thanks to [Fairkor](https://discord.gg/fairkor) and MediocreSteam66 for 
 ## Installation
 
 1. **Download**
-    - Grab the latest version of the plugin from the [Releases](#) section.
+    - Grab the latest version of the plugin from the [Releases](https://github.com/Azimkin/MultiMessageBridge/releases) section.
 2. **Add to Server**
     - Drop the downloaded `.jar` file into the `plugins` folder of your Minecraft server.
 3. **Run the Server**
@@ -28,7 +28,7 @@ Special thanks to [Fairkor](https://discord.gg/fairkor) and MediocreSteam66 for 
 ## Feedback and Support
 
 - **Bug Reports**  
-  Encounter a bug? Open a new issue in the [GitHub Issues](#) section.
+  Encounter a bug? Open a new issue in the [GitHub Issues](https://github.com/Azimkin/MultiMessageBridge/issues) section.
 - **Community Support**  
   Join the discussion and get support on my [Discord server](https://discord.gg/bQaHEXTVHB).
 
