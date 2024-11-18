@@ -7,12 +7,15 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent
 import top.azimkin.multiMessageBridge.MultiMessageBridge
 import top.azimkin.multiMessageBridge.api.events.AsyncDiscordMessageEvent
 import top.azimkin.multiMessageBridge.api.events.JdaProviderRegistrationEvent
+import top.azimkin.multiMessageBridge.configuration.ChannelConfiguration
+import top.azimkin.multiMessageBridge.configuration.DiscordReceiverConfig
 import top.azimkin.multiMessageBridge.data.ConsoleMessageContext
 import top.azimkin.multiMessageBridge.data.MessageContext
 import top.azimkin.multiMessageBridge.data.PlayerLifeContext
 import top.azimkin.multiMessageBridge.data.ServerSessionContext
 import top.azimkin.multiMessageBridge.data.SessionContext
 import top.azimkin.multiMessageBridge.platforms.BaseReceiver
+import top.azimkin.multiMessageBridge.platforms.ConfigurableReceiver
 import top.azimkin.multiMessageBridge.platforms.discord.jdaproviders.CommonJdaProvider
 import top.azimkin.multiMessageBridge.platforms.discord.jdaproviders.JdaProvider
 import top.azimkin.multiMessageBridge.platforms.discord.jdaproviders.JdaProviderManager
@@ -27,27 +30,8 @@ import top.azimkin.multiMessageBridge.utilities.parseColor
 import java.awt.Color
 import kotlin.collections.ArrayDeque
 
-class DiscordReceiver : BaseReceiver(
-    "Discord",
-    mapOf(
-        "jdaProvider" to "default",
-        "channel" to 0L,
-        "console_channel" to 0L,
-        "guild_id" to 0L,
-        "token" to "bot_token",
-        "messages.format._base" to "<platform> <nickname> -> <message>",
-        "messages.format.dead.message" to "<death_message>",
-        "messages.format.dead.color" to "0:0:150",
-        "messages.format.join.message" to "<nickname> has joined the game!",
-        "messages.format.join.color" to "125:120:20",
-        "messages.format.leave.message" to "<nickname> has left the game!",
-        "messages.format.leave.color" to "50:50:100",
-        "messages.format.firstJoin.message" to "<nickname> has joined first time!",
-        "messages.format.firstJoin.color" to "255:255:50",
-        "messages.format.server_enabled" to "Server enabled!",
-        "messages.format.server_disabled" to "Server disabled!",
-    )
-), MessageHandler, MessageDispatcher, PlayerLifeHandler, SessionHandler, ServerSessionHandler,
+class DiscordReceiver : ConfigurableReceiver<DiscordReceiverConfig>("Discord", DiscordReceiverConfig::class.java),
+    MessageHandler, MessageDispatcher, PlayerLifeHandler, SessionHandler, ServerSessionHandler,
     ConsoleMessageDispatcher {
     private val executeQueue = ArrayDeque<() -> Unit>()
     private lateinit var console: ChannelLoggingHandler
@@ -81,15 +65,16 @@ class DiscordReceiver : BaseReceiver(
     }
 
     override fun handle(context: PlayerLifeContext) {
+        val messageConfig = config.messages.death
         sendSimpleEmbed(
             context.playerName,
-            config.getTranslation("messages.format.dead.message").format(
+            messageConfig.format.format(
                 mapOf(
                     "nickname" to context.playerName,
                     "death_message" to context.deathSource
                 )
             ),
-            parseColor(config.getString("messages.format.dead.color"))
+            parseColor(messageConfig.configuration["color"])
         )
     }
 
@@ -98,15 +83,18 @@ class DiscordReceiver : BaseReceiver(
         var color: Color = Color.BLACK
         if (context.isJoined) {
             if (context.isFirstJoined) {
-                message = config.getTranslation("messages.format.firstJoin.message")
-                color = parseColor(config.getString("messages.format.firstJoin.color"))
+                val cfg = config.messages.firstJoin
+                message = cfg.format
+                color = parseColor(cfg.configuration["color"])
             } else {
-                message = config.getTranslation("messages.format.join.message")
-                color = parseColor(config.getString("messages.format.join.color"))
+                val cfg = config.messages.join
+                message = cfg.format
+                color = parseColor(cfg.configuration["color"])
             }
         } else {
-            message = config.getTranslation("messages.format.leave.message")
-            color = parseColor(config.getString("messages.format.leave.color"))
+            val cfg = config.messages.leave
+            message = cfg.format
+            color = parseColor(cfg.configuration["color"])
         }
 
         sendSimpleEmbed(
@@ -123,15 +111,16 @@ class DiscordReceiver : BaseReceiver(
 
     override fun handle(context: ServerSessionContext) {
         if (context.isTurnedOn) {
-            sendMessageToChannel(config.getTranslation("messages.format.server_enabled"))
+            sendMessageToChannel(config.messages.serverEnabled.format)
         } else {
-            sendMessageToChannel(config.getTranslation("messages.format.server_disabled"))
+            sendMessageToChannel(config.messages.serverDisabled.format)
+
         }
     }
 
     @JvmOverloads
-    fun sendSimpleEmbed(author: String, message: String, color: Color = Color.BLACK) = addAction {
-        val channel = config.getLong("channel")
+    fun sendSimpleEmbed(author: String, message: String, color: Color = Color.BLACK, channel: String = "main_text") = addAction {
+        val channel = findChannel(channel)?.id ?: return@addAction
         val textChannel = jda.get().getTextChannelById(channel) ?: return@addAction
         val headUrl = MultiMessageBridge.inst.headProvider.getHeadUrl(author)
         textChannel.sendMessageEmbeds(
@@ -143,7 +132,8 @@ class DiscordReceiver : BaseReceiver(
     }
 
     @JvmOverloads
-    fun sendMessageToChannel(message: String, channel: Long = config.getLong("channel")) = addAction {
+    fun sendMessageToChannel(message: String, channel: String = "main_text") = addAction {
+        val channel = findChannel(channel)?.id ?: return@addAction
         val textChannel = jda.get().getTextChannelById(channel) ?: return@addAction
         textChannel
             .sendMessage(message)
@@ -151,34 +141,37 @@ class DiscordReceiver : BaseReceiver(
     }
 
     fun dispatchMessage(event: MessageReceivedEvent) {
-        val bukkitEvent = AsyncDiscordMessageEvent(event)
+        val bukkitEvent = AsyncDiscordMessageEvent(event, this)
         if (!bukkitEvent.callEvent()) return
         if (event.author.isBot && bukkitEvent.mustBeCanceledIfBot) return
         //MultiMessageBridge.inst.logger.info(event.toString())
-        if (event.channel.idLong == config.getLong("channel")) {
-            val context = MessageContext(
-                event.member?.effectiveName ?: event.author.name,
-                event.message.contentDisplay,
-                event.message.referencedMessage != null,
-                name,
-                event.message.referencedMessage?.contentRaw,
-                event.message.referencedMessage?.member?.effectiveName
-                    ?: event.message.referencedMessage?.author?.name,
-                event.member?.roles?.getOrNull(0)?.name,
-                roleColor = event.member?.roles?.getOrNull(0)?.color,
-                urlAttachments = event.message.attachments.map { it.url },
-            )
-            dispatch(context)
-        } else if (event.channel.idLong == config.getLong("console_channel")) {
-            console.dumpStack()
-            dispatch(ConsoleMessageContext(event.message.contentRaw))
+        val channelConfig = findChannel(id = event.channel.idLong) ?: return
+        when (channelConfig.type) {
+            "main_text" -> {
+                val context = MessageContext(
+                    event.member?.effectiveName ?: event.author.name,
+                    event.message.contentDisplay,
+                    event.message.referencedMessage != null,
+                    name,
+                    event.message.referencedMessage?.contentRaw,
+                    event.message.referencedMessage?.member?.effectiveName
+                        ?: event.message.referencedMessage?.author?.name,
+                    event.member?.roles?.getOrNull(0)?.name,
+                    roleColor = event.member?.roles?.getOrNull(0)?.color,
+                    urlAttachments = event.message.attachments.map { it.url },
+                )
+                dispatch(context)
+            }
+            "console" -> {
+                console.dumpStack()
+                dispatch(ConsoleMessageContext(event.message.contentRaw))
+            }
         }
     }
 
     private fun getMessageOrBase(platform: String): String =
-        config.getString("messages.format.${platform}")
-            ?: config.getString("messages.format._base")
-            ?: "$platform <nickname> -> <message>"
+        config.messages.customFormats[platform]?.format
+            ?: config.messages.messageBase.format
 
     private fun addAction(act: () -> Unit) {
         if (jda.isInitialized()) {
@@ -189,7 +182,7 @@ class DiscordReceiver : BaseReceiver(
     }
 
     private fun createJdaProvider(): JdaProvider {
-        val token = config.getString("token") ?: "unknown"
+        val token = config.bot.token
         val manager = JdaProviderManager().apply {
             add("default" to CommonJdaProvider::class.java)
         }
@@ -200,11 +193,11 @@ class DiscordReceiver : BaseReceiver(
             return CommonJdaProvider(token, this)
         }
 
-        if (manager.providers.isEmpty) {
+        if (manager.providers.isEmpty()) {
             return useCommon("No available JDA providers found!")
         }
 
-        val providerName = config.getString("jdaProvider")
+        val providerName = config.advanced.jdaProvider
         val providerClass = manager.providers[providerName] ?: return useCommon("Unknown provider $providerName")
 
         if (!JdaProvider::class.java.isAssignableFrom(providerClass)) {
@@ -239,7 +232,7 @@ class DiscordReceiver : BaseReceiver(
     private fun attachConsole(jda: JDA) {
         MultiMessageBridge.inst.logger.info("Attaching console appender")
         console =
-            ChannelLoggingHandler({ jda.getTextChannelById(config.getLong("console_channel")) }) { config ->
+            ChannelLoggingHandler({ jda.getTextChannelById(findChannel("console")?.id ?: 0) }) { config ->
                 config.isColored = true
                 config.mapLoggerName("net.dv8tion.jda.api.JDA", "JDA")
                 config.mapLoggerName("net.dv8tion.jda", "JDA")
@@ -249,4 +242,6 @@ class DiscordReceiver : BaseReceiver(
             }.attachLog4jLogging().schedule()
         MultiMessageBridge.inst.logger.info("ConsoleAppender must be attached")
     }
+
+    fun findChannel(type: String? = null, id: Long? = null): ChannelConfiguration? = config.bot.channels.values.find { it.type == type || it.id == id }
 }

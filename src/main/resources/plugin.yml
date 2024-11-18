@@ -1,20 +1,27 @@
 name: MultiMessageBridge
 version: '${version}'
 main: top.azimkin.multiMessageBridge.MultiMessageBridge
-api-version: '1.18'
+#api-version: '1.18'
 prefix: MMB
 load: POSTWORLD
 authors: [ Azimkin ]
 description: Message bridge between TG, Discord and minecraft
 website: https://azimkin.top
+softdepend:
+  - Vault
+  - LuckPerms
+  - PlaceholderAPI
 
 commands:
-  multimessagebridge:
+  mmb:
     aliases:
       - bridge
-    permission: bridge.admin
+      - multimessagebridge
+    permission: mmb.admin
 
 libraries:
   - 'org.jetbrains.kotlin:kotlin-stdlib:2.0.20'
   - "com.github.pengrad:java-telegram-bot-api:7.9.1"
   - 'org.json:json:20240303'
+  - "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.18.1"
+  - "com.fasterxml.jackson.module:jackson-module-kotlin:2.18.1"

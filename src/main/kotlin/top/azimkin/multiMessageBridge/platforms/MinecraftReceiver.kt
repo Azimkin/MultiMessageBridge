@@ -14,6 +14,7 @@ import org.bukkit.event.server.ServerLoadEvent
 import org.bukkit.plugin.java.JavaPlugin
 import org.json.JSONObject
 import top.azimkin.multiMessageBridge.MultiMessageBridge
+import top.azimkin.multiMessageBridge.configuration.MinecraftReceiverConfig
 import top.azimkin.multiMessageBridge.data.MessageContext
 import top.azimkin.multiMessageBridge.data.PlayerLifeContext
 import top.azimkin.multiMessageBridge.data.ServerSessionContext
@@ -30,13 +31,10 @@ import top.azimkin.multiMessageBridge.utilities.toPlainText
 import java.awt.Color
 import java.io.File
 
-class MinecraftReceiver(val plugin: JavaPlugin) : BaseReceiver(
-    "Minecraft",
-    mapOf(
-        "messages.format._base" to "<platform> <role> <nickname> -> <message>",
-        "messages.format.Discord" to "DS <role> <nickname> -> <message>",
-    )
-), Listener, MessageHandler, MessageDispatcher, PlayerLifeDispatcher, ServerSessionDispatcher, SessionDispatcher {
+class MinecraftReceiver(val plugin: JavaPlugin) :
+    ConfigurableReceiver<MinecraftReceiverConfig>("Minecraft", MinecraftReceiverConfig::class.java), Listener,
+    MessageHandler, MessageDispatcher, PlayerLifeDispatcher, ServerSessionDispatcher, SessionDispatcher {
+
     init {
         plugin.server.pluginManager.registerEvents(this, plugin)
         plugin.saveResource("death_messages.json", false)
@@ -68,9 +66,7 @@ class MinecraftReceiver(val plugin: JavaPlugin) : BaseReceiver(
     }
 
     private fun getMessageOrBase(platform: String): String =
-        config.getString("messages.format.${platform}")
-            ?: config.getString("messages.format._base")
-            ?: "$platform <role> <nickname> -> <message>"
+        (config.messages.customFormats[platform] ?: config.messages.messageBase).format
 
     @EventHandler(priority = EventPriority.HIGHEST)
     fun onMessage(event: AsyncChatEvent) {

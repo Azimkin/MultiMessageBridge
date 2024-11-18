@@ -40,8 +40,12 @@ repositories {
 }
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:1.18.2-R0.1-SNAPSHOT")
+    compileOnly("io.papermc.paper:paper-api:1.19.4-R0.1-SNAPSHOT") {
+        exclude(group="com.yaml")
+    }
     compileOnly("org.json:json:20240303")
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.18.1")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.18.1")
     compileOnly("com.github.pengrad:java-telegram-bot-api:7.9.1")
 
     compileOnly("com.github.MilkBowl:VaultAPI:1.7.1")
@@ -49,6 +53,7 @@ dependencies {
 
     implementation("net.dv8tion:JDA:5.1.2") {
         exclude(module="opus-java")
+        exclude(group="com.fasterxml")
     }
     implementation("me.scarsz.jdaappender:jda5:1.2.3") {
         exclude(group="net.dv8tion", module = "JDA")
@@ -62,7 +67,7 @@ kotlin {
 
 tasks {
     runServer {
-        minecraftVersion("1.18.2")
+        minecraftVersion("1.19.4")
     }
 
     processResources {
@@ -81,6 +86,9 @@ tasks {
         exclude("org/slf4j/**")
         exclude("javax/**")
         exclude("com/google/gson/**")
+        //relocate("com.fasterxml", "top.azimkin.relocate.com.fasterxml")
+        //relocate("com.yaml", "top.azimkin.relocate.com.yaml")
+
     }
 
     register("buildProd") {

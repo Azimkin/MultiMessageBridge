@@ -8,6 +8,7 @@ import com.pengrad.telegrambot.request.GetFile
 import com.pengrad.telegrambot.request.SendMessage
 import top.azimkin.multiMessageBridge.MultiMessageBridge
 import top.azimkin.multiMessageBridge.api.events.AsyncTelegramOnUpdateEvent
+import top.azimkin.multiMessageBridge.configuration.TelegramReceiverConfig
 import top.azimkin.multiMessageBridge.data.MessageContext
 import top.azimkin.multiMessageBridge.data.PlayerLifeContext
 import top.azimkin.multiMessageBridge.data.ServerSessionContext
@@ -19,23 +20,10 @@ import top.azimkin.multiMessageBridge.platforms.handlers.ServerSessionHandler
 import top.azimkin.multiMessageBridge.platforms.handlers.SessionHandler
 import top.azimkin.multiMessageBridge.utilities.format
 
-object TelegramReceiver : BaseReceiver(
-    "Telegram",
-    mapOf(
-        "chatId" to 0,
-        "theme" to -1,
-        "TOKEN" to "unknown",
-        "messages.format._base" to "<platform> <role> <nickname> -> <message>",
-        "messages.format.dead" to "<death_message>",
-        "messages.format.join" to "<nickname> has joined the game!",
-        "messages.format.leave" to "<nickname> has left the game!",
-        "messages.format.firstJoin" to "<nickname> has joined first time!",
-        "messages.format.server_enabled" to "Server enabled!",
-        "messages.format.server_disabled" to "Server disabled!",
-        "logPackets" to false
-    )
-), MessageHandler, MessageDispatcher, PlayerLifeHandler, SessionHandler, ServerSessionHandler {
-    val TOKEN = config.getString("TOKEN")
+object TelegramReceiver : ConfigurableReceiver<TelegramReceiverConfig>("Telegram", TelegramReceiverConfig::class.java),
+    MessageHandler,
+    MessageDispatcher, PlayerLifeHandler, SessionHandler, ServerSessionHandler {
+    val TOKEN = config.bot.token
     val bot = TelegramBot(TOKEN).also {
         it.setUpdatesListener { updates ->
             for (update in updates) {
@@ -46,15 +34,12 @@ object TelegramReceiver : BaseReceiver(
     }
 
 
-
     override fun handle(context: MessageContext) {
         sendMessage(parseFormat(context))
     }
 
     private fun parseFormat(context: MessageContext): String {
-        val base = config.getString("messages.format.${context.platform}")
-            ?: config.getString("messages.format._base")
-            ?: "${context.platform} <nickname> -> <message>"
+        val base = (config.messages.customFormats[context.platform] ?: config.messages.messageBase).format
 
         return base.format(
             mapOf(
@@ -69,7 +54,7 @@ object TelegramReceiver : BaseReceiver(
     }
 
     override fun handle(context: PlayerLifeContext) {
-        val format = config.getTranslation("messages.format.dead")
+        val format = config.messages.death.format
         sendMessage(
             format.format(
                 mapOf(
@@ -80,23 +65,23 @@ object TelegramReceiver : BaseReceiver(
         )
     }
 
-    fun sendMessage(text: String) {
+    fun sendMessage(text: String, theme: String = "chat") {
         bot.execute(
-            SendMessage(config.getLong("chatId"), text).apply {
-                if (config.getInt("theme") > -1) messageThreadId(config.getInt("theme"))
+            SendMessage(config.bot.mainChat, text).apply {
+                if (config.bot.mainThread > -1) messageThreadId(config.bot.mainThread)
             })
     }
 
     override fun handle(context: SessionContext) {
         var message = if (context.isJoined) {
             if (context.isFirstJoined) {
-                config.getTranslation("messages.format.firstJoin")
+                config.messages.firstJoin
             } else {
-                config.getTranslation("messages.format.join")
+                config.messages.join
             }
         } else {
-            config.getTranslation("messages.format.leave")
-        }
+            config.messages.leave
+        }.format
         sendMessage(
             message.format(
                 mapOf(
@@ -108,6 +93,7 @@ object TelegramReceiver : BaseReceiver(
         )
     }
 
+    // TODO
     fun getPhotoLink(update: Update): String? {
         if (update.message().photo() == null) return null
         val photos: List<PhotoSize> = update.message().photo().toList()
@@ -118,6 +104,7 @@ object TelegramReceiver : BaseReceiver(
         return "https://api.telegram.org/file/bot${TOKEN}/${file.filePath()}"
     }
 
+    // TODO
     fun getVideoLink(update: Update): String? {
         if (update.message().video() == null) return null
         val video = update.message().video()
@@ -131,9 +118,9 @@ object TelegramReceiver : BaseReceiver(
 
     override fun handle(context: ServerSessionContext) {
         if (context.isTurnedOn) {
-            sendMessage(config.getTranslation("messages.format.server_enabled"))
+            sendMessage(config.messages.serverEnabled.format)
         } else {
-            sendMessage(config.getTranslation("messages.format.server_disabled"))
+            sendMessage(config.messages.serverDisabled.format)
         }
     }
 
@@ -141,15 +128,17 @@ object TelegramReceiver : BaseReceiver(
         val event = AsyncTelegramOnUpdateEvent(update)
         if (!event.callEvent()) return
 
-        if (config.getBoolean("logPackets")) {
+        if (config.debug.logPackets) {
             MultiMessageBridge.inst.logger.info(update.toString())
         }
-        if (update.message() != null && update.message().messageThreadId() != null) {
-            if (update.message().chat().id() == config.getLong("chatId") && update.message()
-                    .messageThreadId() == config.getInt("theme")
-            ) {
+        if (config.debug.preConfiguredDebug) {
+            MultiMessageBridge.inst.logger.info("Preconfigure debug enabled! Please, disable it in Telegram.yml after setting it up!")
+            MultiMessageBridge.inst.logger.info("    ChatId: ${update.message()?.chat()?.id()} ThreadId: ${update.message()?.messageThreadId()} Message: ${update.message()?.text()}")
+        }
+        if (update.message()?.chat()?.id() == config.bot.mainChat) {
+            if (config.bot.mainThread < 0 || (update.message()?.messageThreadId() == config.bot.mainThread)) {
                 val link = getPhotoLink(update) ?: getVideoLink(update)
-                if (update.message().text() == null && link == null) return
+                if (update.message()?.text() == null && link == null) return
                 dispatch(
                     MessageContext(
                         update.message().from().username(),
