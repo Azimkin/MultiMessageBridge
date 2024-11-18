@@ -2,7 +2,7 @@ package top.azimkin.multiMessageBridge
 
 import net.milkbowl.vault.chat.Chat
 import org.bukkit.plugin.java.JavaPlugin
-import top.azimkin.multiMessageBridge.api.events.HeadImageProviderRegistrationEvent
+import top.azimkin.multiMessageBridge.api.events.AsyncHeadImageProviderRegistrationEvent
 import top.azimkin.multiMessageBridge.api.events.ReceiverRegistrationEvent
 import top.azimkin.multiMessageBridge.commands.MainCommand
 import top.azimkin.multiMessageBridge.listeners.CommonListener
@@ -13,6 +13,7 @@ import top.azimkin.multiMessageBridge.metadata.VaultMetadataProvider
 import top.azimkin.multiMessageBridge.skins.HeadProviderManager
 import top.azimkin.multiMessageBridge.skins.LinkHeadProvider
 import top.azimkin.multiMessageBridge.skins.SkinHeadProvider
+import top.azimkin.multiMessageBridge.utilities.runBukkitAsync
 
 class MultiMessageBridge : JavaPlugin() {
     companion object {
@@ -36,6 +37,8 @@ class MultiMessageBridge : JavaPlugin() {
 
         server.pluginManager.registerEvents(CommonListener, this)
 
+        reload()
+
         ReceiverRegistrationEvent(MessagingEventManager.get()).callEvent()
         logger.info("RegisteredReceivers: ")
         for ((i, j) in MessagingEventManager.get().receivers.withIndex()) {
@@ -49,10 +52,13 @@ class MultiMessageBridge : JavaPlugin() {
 
     fun reload() {
         reloadConfig()
-        val mgr = HeadProviderManager()
-        mgr.add("default" to LinkHeadProvider::class.java)
-        HeadImageProviderRegistrationEvent(mgr).callEvent()
-        headProvider = mgr.createByName(config.getString("headProvider")!!, config.getString("headUrl")!!)
+        runBukkitAsync {
+            val mgr = HeadProviderManager()
+            mgr.add("default" to LinkHeadProvider::class.java)
+            AsyncHeadImageProviderRegistrationEvent(mgr).callEvent()
+            headProvider = mgr.createByName(config.getString("heads.provider")!!, config.getString("heads.url")!!)
+        }
+        setupMetadataProvider()
     }
 
     fun setupMetadataProvider() {

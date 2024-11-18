@@ -1,4 +1,4 @@
-package top.azimkin.multiMessageBridge.utilities.configuration
+package top.azimkin.multiMessageBridge.configuration
 
 import java.io.File
 

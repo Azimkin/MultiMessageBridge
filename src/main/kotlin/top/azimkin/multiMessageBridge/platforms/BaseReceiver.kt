@@ -1,7 +1,7 @@
 package top.azimkin.multiMessageBridge.platforms
 
-import top.azimkin.multiMessageBridge.utilities.configuration.ReceiverConfig
-import top.azimkin.multiMessageBridge.utilities.configuration.YamlReceiverConfiguration
+import top.azimkin.multiMessageBridge.configuration.ReceiverConfig
+import top.azimkin.multiMessageBridge.configuration.YamlReceiverConfiguration
 
 abstract class BaseReceiver(
     val name: String,

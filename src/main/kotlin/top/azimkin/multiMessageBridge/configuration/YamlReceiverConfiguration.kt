@@ -1,4 +1,4 @@
-package top.azimkin.multiMessageBridge.utilities.configuration
+package top.azimkin.multiMessageBridge.configuration
 
 import org.bukkit.configuration.file.FileConfiguration
 import org.bukkit.configuration.file.YamlConfiguration

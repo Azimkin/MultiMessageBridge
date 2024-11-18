@@ -4,7 +4,7 @@ import org.bukkit.event.Event
 import org.bukkit.event.HandlerList
 import top.azimkin.multiMessageBridge.skins.HeadProviderManager
 
-class HeadImageProviderRegistrationEvent(val manager: HeadProviderManager) : Event() {
+class AsyncHeadImageProviderRegistrationEvent(val manager: HeadProviderManager) : Event(true) {
     override fun getHandlers(): HandlerList = handlerList
 
     companion object {

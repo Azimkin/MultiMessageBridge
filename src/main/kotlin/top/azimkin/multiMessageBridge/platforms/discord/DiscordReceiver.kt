@@ -136,12 +136,10 @@ class DiscordReceiver : BaseReceiver(
         val headUrl = MultiMessageBridge.inst.headProvider.getHeadUrl(author)
         textChannel.sendMessageEmbeds(
             EmbedBuilder()
-                .setAuthor(author, null, headUrl)
-                .setTitle(message)
+                .setAuthor(message, null, headUrl)
                 .setColor(color)
                 .build()
         ).queue()
-
     }
 
     @JvmOverloads
