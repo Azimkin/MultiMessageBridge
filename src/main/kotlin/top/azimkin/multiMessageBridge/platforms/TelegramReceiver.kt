@@ -20,11 +20,11 @@ import top.azimkin.multiMessageBridge.platforms.handlers.ServerSessionHandler
 import top.azimkin.multiMessageBridge.platforms.handlers.SessionHandler
 import top.azimkin.multiMessageBridge.utilities.format
 
-object TelegramReceiver : ConfigurableReceiver<TelegramReceiverConfig>("Telegram", TelegramReceiverConfig::class.java),
+class TelegramReceiver : ConfigurableReceiver<TelegramReceiverConfig>("Telegram", TelegramReceiverConfig::class.java),
     MessageHandler,
     MessageDispatcher, PlayerLifeHandler, SessionHandler, ServerSessionHandler {
-    val TOKEN = config.bot.token
-    val bot = TelegramBot(TOKEN).also {
+    val token = config.bot.token
+    val bot = TelegramBot(token).also {
         it.setUpdatesListener { updates ->
             for (update in updates) {
                 processUpdate(update)
@@ -101,7 +101,7 @@ object TelegramReceiver : ConfigurableReceiver<TelegramReceiverConfig>("Telegram
         val fileId: String = largestPhoto.fileId()
         val getFile = GetFile(fileId)
         val file = bot.execute(getFile).file()
-        return "https://api.telegram.org/file/bot${TOKEN}/${file.filePath()}"
+        return "https://api.telegram.org/file/bot${token}/${file.filePath()}"
     }
 
     // TODO
@@ -111,10 +111,10 @@ object TelegramReceiver : ConfigurableReceiver<TelegramReceiverConfig>("Telegram
         if (video.fileSize() > MAX_FILE_SIZE) return null
         val getFile = GetFile(video.fileId())
         val file = bot.execute(getFile).file()
-        return "https://api.telegram.org/file/bot${TOKEN}/${file.filePath()}"
+        return "https://api.telegram.org/file/bot${token}/${file.filePath()}"
     }
 
-    private const val MAX_FILE_SIZE = 25_000_000
+
 
     override fun handle(context: ServerSessionContext) {
         if (context.isTurnedOn) {
@@ -152,5 +152,9 @@ object TelegramReceiver : ConfigurableReceiver<TelegramReceiverConfig>("Telegram
                 )
             }
         }
+    }
+
+    companion object {
+        private const val MAX_FILE_SIZE = 25_000_000
     }
 }

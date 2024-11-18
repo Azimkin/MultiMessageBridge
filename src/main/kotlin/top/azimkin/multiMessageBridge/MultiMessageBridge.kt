@@ -5,6 +5,8 @@ import org.bukkit.plugin.java.JavaPlugin
 import top.azimkin.multiMessageBridge.api.events.AsyncHeadImageProviderRegistrationEvent
 import top.azimkin.multiMessageBridge.api.events.ReceiverRegistrationEvent
 import top.azimkin.multiMessageBridge.commands.MainCommand
+import top.azimkin.multiMessageBridge.configuration.ConfigManager
+import top.azimkin.multiMessageBridge.configuration.MMBConfiguration
 import top.azimkin.multiMessageBridge.listeners.CommonListener
 import top.azimkin.multiMessageBridge.metadata.LuckPermsMetadataProvider
 import top.azimkin.multiMessageBridge.metadata.NoMetadataProvider
@@ -14,26 +16,30 @@ import top.azimkin.multiMessageBridge.skins.HeadProviderManager
 import top.azimkin.multiMessageBridge.skins.LinkHeadProvider
 import top.azimkin.multiMessageBridge.skins.SkinHeadProvider
 import top.azimkin.multiMessageBridge.utilities.runBukkitAsync
+import java.io.File
 
 class MultiMessageBridge : JavaPlugin() {
     companion object {
         lateinit var inst: MultiMessageBridge private set
     }
 
+    init {
+        inst = this
+    }
+
     lateinit var headProvider: SkinHeadProvider
         private set
     lateinit var metadataProvider: PlayerMetadataProvider
         private set
-
-    override fun onLoad() {
-        inst = this
-    }
+    private val configManager =
+        ConfigManager<MMBConfiguration>(MMBConfiguration::class.java, File(dataFolder, "config.yml"))
+    lateinit var pluginConfig: MMBConfiguration
+        private set
 
     override fun onEnable() {
-        saveDefaultConfig()
-
-        getCommand("multimessagebridge")?.setExecutor(MainCommand)
-        getCommand("multimessagebridge")?.tabCompleter = MainCommand
+        dataFolder.mkdir()
+        getCommand("mmb")?.setExecutor(MainCommand)
+        getCommand("mmb")?.tabCompleter = MainCommand
 
         server.pluginManager.registerEvents(CommonListener, this)
 
@@ -56,7 +62,7 @@ class MultiMessageBridge : JavaPlugin() {
             val mgr = HeadProviderManager()
             mgr.add("default" to LinkHeadProvider::class.java)
             AsyncHeadImageProviderRegistrationEvent(mgr).callEvent()
-            headProvider = mgr.createByName(config.getString("heads.provider")!!, config.getString("heads.url")!!)
+            headProvider = mgr.createByName(pluginConfig.heads.provider, pluginConfig.heads.url)
         }
         setupMetadataProvider()
     }
@@ -70,5 +76,9 @@ class MultiMessageBridge : JavaPlugin() {
             } else {
                 NoMetadataProvider()
             }
+    }
+
+    override fun reloadConfig() {
+        pluginConfig = configManager.loadOrUseDefault()
     }
 }
