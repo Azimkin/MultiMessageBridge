@@ -184,7 +184,7 @@ class DiscordReceiver : ConfigurableReceiver<DiscordReceiverConfig>("Discord", D
     private fun createJdaProvider(): JdaProvider {
         val token = config.bot.token
         val manager = JdaProviderManager().apply {
-            add("default" to CommonJdaProvider::class.java)
+            add("default", CommonJdaProvider::class.java)
         }
         JdaProviderRegistrationEvent(manager).callEvent()
 

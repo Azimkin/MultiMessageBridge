@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "top.azimkin"
-version = "0.1.1"
+version = "0.2"
 
 fun getVersionWithBuildNumber(): String {
     val buildFile = File("buildnumber.txt")
@@ -46,10 +46,11 @@ dependencies {
     compileOnly("org.json:json:20240303")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.18.1")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.18.1")
-    compileOnly("com.github.pengrad:java-telegram-bot-api:7.9.1")
+    implementation("com.github.pengrad:java-telegram-bot-api:7.9.1")
 
     compileOnly("com.github.MilkBowl:VaultAPI:1.7.1")
     compileOnly("net.luckperms:api:5.4")
+    compileOnly("me.clip:placeholderapi:2.11.6")
 
     implementation("net.dv8tion:JDA:5.1.2") {
         exclude(module="opus-java")
@@ -86,6 +87,7 @@ tasks {
         exclude("org/slf4j/**")
         exclude("javax/**")
         exclude("com/google/gson/**")
+        //exclude("com/fasterxml/**")
         //relocate("com.fasterxml", "top.azimkin.relocate.com.fasterxml")
         //relocate("com.yaml", "top.azimkin.relocate.com.yaml")
 
