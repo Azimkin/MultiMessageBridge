@@ -125,7 +125,7 @@ class TelegramReceiver : ConfigurableReceiver<TelegramReceiverConfig>("Telegram"
     }
 
     private fun processUpdate(update: Update) {
-        val event = AsyncTelegramOnUpdateEvent(update)
+        val event = AsyncTelegramOnUpdateEvent(update, bot)
         if (!event.callEvent()) return
 
         if (config.debug.logPackets) {

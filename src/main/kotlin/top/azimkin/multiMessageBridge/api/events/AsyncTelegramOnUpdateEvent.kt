@@ -1,11 +1,12 @@
 package top.azimkin.multiMessageBridge.api.events
 
+import com.pengrad.telegrambot.TelegramBot
 import com.pengrad.telegrambot.model.Update
 import org.bukkit.event.Cancellable
 import org.bukkit.event.Event
 import org.bukkit.event.HandlerList
 
-class AsyncTelegramOnUpdateEvent(val update: Update) : Event(true), Cancellable {
+class AsyncTelegramOnUpdateEvent(val update: Update, val bot: TelegramBot) : Event(true), Cancellable {
     private var cancelled: Boolean = false
     override fun getHandlers(): HandlerList = handlerList
     override fun isCancelled(): Boolean = cancelled
