@@ -1,4 +1,4 @@
-package server
+package top.azimkin.multiMessageBridge.server
 
 import org.bukkit.Bukkit
 import top.azimkin.multiMessageBridge.MultiMessageBridge

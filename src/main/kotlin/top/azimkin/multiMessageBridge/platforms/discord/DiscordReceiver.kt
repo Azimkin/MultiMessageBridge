@@ -4,7 +4,7 @@ import me.scarsz.jdaappender.ChannelLoggingHandler
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
-import server.ServerInfoProvider
+import top.azimkin.multiMessageBridge.server.ServerInfoProvider
 import top.azimkin.multiMessageBridge.MultiMessageBridge
 import top.azimkin.multiMessageBridge.api.events.AsyncDiscordMessageEvent
 import top.azimkin.multiMessageBridge.api.events.JdaProviderRegistrationEvent
@@ -240,8 +240,8 @@ class DiscordReceiver : ConfigurableReceiver<DiscordReceiverConfig>("Discord", D
                 config.isColored = true
                 config.mapLoggerName("net.dv8tion.jda.api.JDA", "JDA")
                 config.mapLoggerName("net.dv8tion.jda", "JDA")
-                config.mapLoggerName("net.minecraft.server.MinecraftServer", "Server")
-                config.mapLoggerNameFriendly("net.minecraft.server") { s -> "Server/$s" }
+                config.mapLoggerName("net.minecraft.top.azimkin.multiMessageBridge.server.MinecraftServer", "Server")
+                config.mapLoggerNameFriendly("net.minecraft.top.azimkin.multiMessageBridge.server") { s -> "Server/$s" }
                 config.mapLoggerNameFriendly("net.minecraft") { s -> "Minecraft/$s" }
             }.attachLog4jLogging().schedule()
         MultiMessageBridge.inst.logger.info("ConsoleAppender must be attached")
@@ -250,7 +250,7 @@ class DiscordReceiver : ConfigurableReceiver<DiscordReceiverConfig>("Discord", D
     fun findChannel(type: String? = null, id: Long? = null): ChannelConfiguration? =
         config.bot.channels.values.find { it.type == type || it.id == id }
 
-    override fun handle(context: ServerInfoContext) {
+    override fun handle(context: ServerInfoContext) = addAction {
         for ((_, j) in config.bot.channels) {
             jda.get().getTextChannelById(j.id)?.manager
                 ?.setTopic(ServerInfoProvider.parse(if (j.description == "") context.text else j.description))

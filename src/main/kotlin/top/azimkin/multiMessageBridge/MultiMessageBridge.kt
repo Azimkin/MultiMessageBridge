@@ -64,7 +64,7 @@ class MultiMessageBridge : JavaPlugin() {
         Bukkit.getScheduler().runTaskTimerAsynchronously(
             this,
             this::updateServerInfo,
-            pluginConfig.serverInfoUpdateTime.toLong()*20,
+            0L,
             pluginConfig.serverInfoUpdateTime.toLong()*20
         )
     }

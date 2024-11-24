@@ -12,14 +12,14 @@ Special thanks to [Fairkor](https://discord.gg/fairkor) and MediocreSteam66 for 
 1. **Download**
     - Grab the latest version of the plugin from the [Releases](https://github.com/Azimkin/MultiMessageBridge/releases) section.
 2. **Add to Server**
-    - Drop the downloaded `.jar` file into the `plugins` folder of your Minecraft server.
+    - Drop the downloaded `.jar` file into the `plugins` folder of your Minecraft top.azimkin.multiMessageBridge.server.
 3. **Run the Server**
-    - Start your Minecraft server to generate the default configuration files.
+    - Start your Minecraft top.azimkin.multiMessageBridge.server to generate the default configuration files.
 4. **Configure the Plugin**
     - Locate the configuration folder: `plugins/MultiMessageBridge/`.
     - Adjust settings in `config.yml` and other receiver-specific files (e.g., `Discord.yml`, `Telegram.yml`, etc.).
 5. **Restart the Server**
-    - Restart the server to apply your changes.
+    - Restart the top.azimkin.multiMessageBridge.server to apply your changes.
 6. **Enjoy!**
     - Your messaging bridge is now ready to use.
 
@@ -30,7 +30,7 @@ Special thanks to [Fairkor](https://discord.gg/fairkor) and MediocreSteam66 for 
 - **Bug Reports**  
   Encounter a bug? Open a new issue in the [GitHub Issues](https://github.com/Azimkin/MultiMessageBridge/issues) section.
 - **Community Support**  
-  Join the discussion and get support on my [Discord server](https://discord.gg/bQaHEXTVHB).
+  Join the discussion and get support on my [Discord top.azimkin.multiMessageBridge.server](https://discord.gg/bQaHEXTVHB).
 
 ---
 

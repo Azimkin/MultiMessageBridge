@@ -4,7 +4,6 @@ import java.time.Duration
 
 class DateFormatter(val format: () -> String) {
     fun format(timeInMillis: Long): String {
-        println(timeInMillis)
         var format = format()
         var duration = Duration.ofMillis(timeInMillis)
         val days = format.contains("{d}")
