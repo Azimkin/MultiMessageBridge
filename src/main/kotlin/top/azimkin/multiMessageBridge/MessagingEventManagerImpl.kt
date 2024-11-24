@@ -5,6 +5,7 @@ import top.azimkin.multiMessageBridge.api.events.AsyncChatMessageDispatchedEvent
 import top.azimkin.multiMessageBridge.data.ConsoleMessageContext
 import top.azimkin.multiMessageBridge.data.MessageContext
 import top.azimkin.multiMessageBridge.data.PlayerLifeContext
+import top.azimkin.multiMessageBridge.data.ServerInfoContext
 import top.azimkin.multiMessageBridge.data.ServerSessionContext
 import top.azimkin.multiMessageBridge.data.SessionContext
 import top.azimkin.multiMessageBridge.platforms.BaseReceiver
@@ -15,6 +16,7 @@ import top.azimkin.multiMessageBridge.platforms.dispatchers.ServerSessionDispatc
 import top.azimkin.multiMessageBridge.platforms.dispatchers.SessionDispatcher
 import top.azimkin.multiMessageBridge.platforms.handlers.MessageHandler
 import top.azimkin.multiMessageBridge.platforms.handlers.PlayerLifeHandler
+import top.azimkin.multiMessageBridge.platforms.handlers.ServerInfoHandler
 import top.azimkin.multiMessageBridge.platforms.handlers.ServerSessionHandler
 import top.azimkin.multiMessageBridge.platforms.handlers.SessionHandler
 import java.util.LinkedList
@@ -31,6 +33,7 @@ class MessagingEventManagerImpl : MessagingEventManager {
     private val sessionHandlers: MutableList<SessionHandler> = LinkedList()
     private val serverSessionHandlers: MutableList<ServerSessionHandler> = LinkedList()
     private val playerLifeHandlers: MutableList<PlayerLifeHandler> = LinkedList()
+    private val serverInfoHandlers: MutableList<ServerInfoHandler> = LinkedList()
 
     private val baseReceivers: MutableList<BaseReceiver> = LinkedList()
     override val receivers: List<BaseReceiver>
@@ -111,6 +114,12 @@ class MessagingEventManagerImpl : MessagingEventManager {
         }
     }
 
+    override fun dispatch(context: ServerInfoContext) {
+        for (handler in serverInfoHandlers) {
+            handler.handle(context)
+        }
+    }
+
     override fun register(vararg managers: BaseReceiver) {
         for (manager in managers) {
             try {
@@ -126,6 +135,9 @@ class MessagingEventManagerImpl : MessagingEventManager {
                 }
                 if (manager is SessionHandler) {
                     sessionHandlers.add(manager)
+                }
+                if (manager is ServerInfoHandler) {
+                    serverInfoHandlers.add(manager)
                 }
 
                 if (manager is MessageDispatcher) {

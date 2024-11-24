@@ -4,6 +4,7 @@ import me.scarsz.jdaappender.ChannelLoggingHandler
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
+import server.ServerInfoProvider
 import top.azimkin.multiMessageBridge.MultiMessageBridge
 import top.azimkin.multiMessageBridge.api.events.AsyncDiscordMessageEvent
 import top.azimkin.multiMessageBridge.api.events.JdaProviderRegistrationEvent
@@ -12,9 +13,9 @@ import top.azimkin.multiMessageBridge.configuration.DiscordReceiverConfig
 import top.azimkin.multiMessageBridge.data.ConsoleMessageContext
 import top.azimkin.multiMessageBridge.data.MessageContext
 import top.azimkin.multiMessageBridge.data.PlayerLifeContext
+import top.azimkin.multiMessageBridge.data.ServerInfoContext
 import top.azimkin.multiMessageBridge.data.ServerSessionContext
 import top.azimkin.multiMessageBridge.data.SessionContext
-import top.azimkin.multiMessageBridge.platforms.BaseReceiver
 import top.azimkin.multiMessageBridge.platforms.ConfigurableReceiver
 import top.azimkin.multiMessageBridge.platforms.discord.jdaproviders.CommonJdaProvider
 import top.azimkin.multiMessageBridge.platforms.discord.jdaproviders.JdaProvider
@@ -23,6 +24,7 @@ import top.azimkin.multiMessageBridge.platforms.dispatchers.ConsoleMessageDispat
 import top.azimkin.multiMessageBridge.platforms.dispatchers.MessageDispatcher
 import top.azimkin.multiMessageBridge.platforms.handlers.MessageHandler
 import top.azimkin.multiMessageBridge.platforms.handlers.PlayerLifeHandler
+import top.azimkin.multiMessageBridge.platforms.handlers.ServerInfoHandler
 import top.azimkin.multiMessageBridge.platforms.handlers.ServerSessionHandler
 import top.azimkin.multiMessageBridge.platforms.handlers.SessionHandler
 import top.azimkin.multiMessageBridge.utilities.format
@@ -32,7 +34,7 @@ import kotlin.collections.ArrayDeque
 
 class DiscordReceiver : ConfigurableReceiver<DiscordReceiverConfig>("Discord", DiscordReceiverConfig::class.java),
     MessageHandler, MessageDispatcher, PlayerLifeHandler, SessionHandler, ServerSessionHandler,
-    ConsoleMessageDispatcher {
+    ConsoleMessageDispatcher, ServerInfoHandler {
     private val executeQueue = ArrayDeque<() -> Unit>()
     private lateinit var console: ChannelLoggingHandler
 
@@ -119,17 +121,18 @@ class DiscordReceiver : ConfigurableReceiver<DiscordReceiverConfig>("Discord", D
     }
 
     @JvmOverloads
-    fun sendSimpleEmbed(author: String, message: String, color: Color = Color.BLACK, channel: String = "main_text") = addAction {
-        val channel = findChannel(channel)?.id ?: return@addAction
-        val textChannel = jda.get().getTextChannelById(channel) ?: return@addAction
-        val headUrl = MultiMessageBridge.inst.headProvider.getHeadUrl(author)
-        textChannel.sendMessageEmbeds(
-            EmbedBuilder()
-                .setAuthor(message, null, headUrl)
-                .setColor(color)
-                .build()
-        ).queue()
-    }
+    fun sendSimpleEmbed(author: String, message: String, color: Color = Color.BLACK, channel: String = "main_text") =
+        addAction {
+            val channel = findChannel(channel)?.id ?: return@addAction
+            val textChannel = jda.get().getTextChannelById(channel) ?: return@addAction
+            val headUrl = MultiMessageBridge.inst.headProvider.getHeadUrl(author)
+            textChannel.sendMessageEmbeds(
+                EmbedBuilder()
+                    .setAuthor(message, null, headUrl)
+                    .setColor(color)
+                    .build()
+            ).queue()
+        }
 
     @JvmOverloads
     fun sendMessageToChannel(message: String, channel: String = "main_text") = addAction {
@@ -162,6 +165,7 @@ class DiscordReceiver : ConfigurableReceiver<DiscordReceiverConfig>("Discord", D
                 )
                 dispatch(context)
             }
+
             "console" -> {
                 console.dumpStack()
                 dispatch(ConsoleMessageContext(event.message.contentRaw))
@@ -243,5 +247,14 @@ class DiscordReceiver : ConfigurableReceiver<DiscordReceiverConfig>("Discord", D
         MultiMessageBridge.inst.logger.info("ConsoleAppender must be attached")
     }
 
-    fun findChannel(type: String? = null, id: Long? = null): ChannelConfiguration? = config.bot.channels.values.find { it.type == type || it.id == id }
+    fun findChannel(type: String? = null, id: Long? = null): ChannelConfiguration? =
+        config.bot.channels.values.find { it.type == type || it.id == id }
+
+    override fun handle(context: ServerInfoContext) {
+        for ((_, j) in config.bot.channels) {
+            jda.get().getTextChannelById(j.id)?.manager
+                ?.setTopic(ServerInfoProvider.parse(if (j.description == "") context.text else j.description))
+                ?.queue()
+        }
+    }
 }

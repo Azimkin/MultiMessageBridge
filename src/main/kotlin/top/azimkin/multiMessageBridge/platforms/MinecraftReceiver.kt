@@ -35,12 +35,13 @@ class MinecraftReceiver(val plugin: JavaPlugin) :
     ConfigurableReceiver<MinecraftReceiverConfig>("Minecraft", MinecraftReceiverConfig::class.java), Listener,
     MessageHandler, MessageDispatcher, PlayerLifeDispatcher, ServerSessionDispatcher, SessionDispatcher {
 
+    var deathMessages = JSONObject()
+
     init {
         plugin.server.pluginManager.registerEvents(this, plugin)
-        plugin.saveResource("death_messages.json", false)
+        updateDeathMessages()
     }
 
-    val deathMessages = JSONObject(File(plugin.dataFolder, "death_messages.json").readText())
 
     override fun handle(context: MessageContext) {
         val baseMessage = getMessageOrBase(context.platform)
@@ -66,7 +67,7 @@ class MinecraftReceiver(val plugin: JavaPlugin) :
     }
 
     private fun getMessageOrBase(platform: String): String =
-        (config.messages.customFormats[platform] ?: config.messages.messageBase).format
+        config.messages.customFormats[platform] ?: config.messages.messageBase
 
     @EventHandler(priority = EventPriority.HIGHEST)
     fun onMessage(event: AsyncChatEvent) {
@@ -87,70 +88,57 @@ class MinecraftReceiver(val plugin: JavaPlugin) :
     @EventHandler
     fun onPlayerDeath(event: PlayerDeathEvent) {
         val plain = event.deathMessage()?.toPlainText() ?: ""
-        var key = plain.replace(event.player.displayName().toPlainText(), "%1\$s")
-        val cause = event.player.lastDamageCause
-        var damager = ""
-        if (cause is EntityDamageByEntityEvent) {
-            damager = cause.damager.customName()?.toPlainText() ?: cause.damager.name
-            key = key.replace(damager, "%2\$s")
-        } else if (cause is EntityDamageByBlockEvent) {
-            damager = cause.damager?.type?.name?.lowercase() ?: "block"
-            key = key.replace(damager, "%2\$s")
-        } else {
-            println("Unknown cause: $cause")
-        }
-        dispatch(
-            PlayerLifeContext(
-                event.player.name,
-                getTranslatedMessage(key, plain)
-                    .replace("%1\$s", event.player.displayName().toPlainText())
-                    .replace("%2\$s", damager)
-            )
-        )
-    }
+        val messageToSend = if (config.translateDeathMessages) {
+            var key = plain.replace(event.player.displayName().toPlainText(), "%1\$s")
+            val cause = event.player.lastDamageCause
+            var damager = ""
+            if (cause is EntityDamageByEntityEvent) {
+                damager = cause.damager.customName()?.toPlainText() ?: cause.damager.name
+                key = key.replace(damager, "%2\$s")
+            } else if (cause is EntityDamageByBlockEvent) {
+                damager = cause.damager?.type?.name?.lowercase() ?: "block"
+                key = key.replace(damager, "%2\$s")
+            } else {
+                println("Unknown cause: $cause")
+            }
+            try {
+                deathMessages.getString(key)
+            } catch (_: Exception) {
+                plain
+            }.replace("%1\$s", event.player.displayName().toPlainText()).replace("%2\$s", damager)
+        } else plain
 
-    fun getTranslatedMessage(parsedText: String, plain: String): String {
-        return try {
-            deathMessages.getString(parsedText)
-        } catch (e: Exception) {
-            plain
-        }
+        dispatch(PlayerLifeContext(event.player.name, messageToSend))
     }
 
     @EventHandler
     fun onPlayerJoin(event: PlayerJoinEvent) {
-        val isFirstJoin = !event.player.hasPlayedBefore()
-
-        dispatch(
-            SessionContext(
-                event.player.name,
-                true,
-                isFirstJoin
-            )
-        )
+        dispatch(SessionContext(event.player.name, true, !event.player.hasPlayedBefore()))
     }
 
     @EventHandler
     fun onPlayerQuit(event: PlayerQuitEvent) {
-        dispatch(
-            SessionContext(
-                event.player.name,
-                false,
-                false
-            )
-        )
+        dispatch(SessionContext(event.player.name, false))
     }
 
     @EventHandler
     fun onServerEnable(event: ServerLoadEvent) {
-        dispatch(ServerSessionContext(true))
+        dispatch(ServerSessionContext(true, event.type == ServerLoadEvent.LoadType.RELOAD))
     }
 
     override fun onDisable() {
         dispatch(ServerSessionContext(false))
     }
 
-    companion object {
-        private val LINK_REGEX = Regex("\\bhttps?:\\/\\/(?:www\\.)?[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}(?:\\/\\S*)?\\b")
+    override fun reload() {
+        super.reload()
+        updateDeathMessages()
+    }
+
+    private fun updateDeathMessages() {
+        if (config.translateDeathMessages) {
+            plugin.saveResource("death_messages.json", false)
+            deathMessages = JSONObject(File(plugin.dataFolder, "death_messages.json").readText())
+        }
     }
 }

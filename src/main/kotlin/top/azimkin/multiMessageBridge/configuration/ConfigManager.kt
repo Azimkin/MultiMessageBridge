@@ -16,7 +16,6 @@ class ConfigManager<T>(
             .build()
     ).findAndRegisterModules()
 ) {
-
     fun loadOrUseDefault(): T {
         return if (configFile.exists()) {
             try {

@@ -3,6 +3,7 @@ package top.azimkin.multiMessageBridge
 import top.azimkin.multiMessageBridge.data.ConsoleMessageContext
 import top.azimkin.multiMessageBridge.data.MessageContext
 import top.azimkin.multiMessageBridge.data.PlayerLifeContext
+import top.azimkin.multiMessageBridge.data.ServerInfoContext
 import top.azimkin.multiMessageBridge.data.ServerSessionContext
 import top.azimkin.multiMessageBridge.data.SessionContext
 import top.azimkin.multiMessageBridge.platforms.BaseReceiver
@@ -24,6 +25,8 @@ interface MessagingEventManager {
     fun dispatch(dispatcher: PlayerLifeDispatcher, context: PlayerLifeContext)
 
     fun dispatch(dispatcher: ConsoleMessageDispatcher, context: ConsoleMessageContext)
+
+    fun dispatch(context: ServerInfoContext)
 
     fun register(vararg managers: BaseReceiver)
 

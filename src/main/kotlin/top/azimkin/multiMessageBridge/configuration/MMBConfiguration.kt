@@ -3,6 +3,9 @@ package top.azimkin.multiMessageBridge.configuration
 data class MMBConfiguration(
     val heads: HeadsConfiguration = HeadsConfiguration(),
     val enabledDefaultReceivers: Set<String> = setOf("Minecraft", "Discord", "Telegram"),
+    val timeFormat: String = "{d} days {h} hours {m} minutes",
+    val serverInfoUpdateTime: Int = 60,
+    val defaultServerInfoFormat: String = "Players online: {online} Players total: {total} Uptime: {uptime}",
 )
 
 data class HeadsConfiguration(

@@ -18,6 +18,7 @@ data class BotConfiguration(
 data class ChannelConfiguration(
     val type: String = "unknown",
     val id: Long = 0,
+    val description: String? = null,
 )
 
 data class AdvancedConfiguration(

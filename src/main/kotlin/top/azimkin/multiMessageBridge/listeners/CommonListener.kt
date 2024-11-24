@@ -2,6 +2,7 @@ package top.azimkin.multiMessageBridge.listeners
 
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
+import org.bukkit.event.server.ServerLoadEvent
 import top.azimkin.multiMessageBridge.MultiMessageBridge
 import top.azimkin.multiMessageBridge.api.events.AsyncChatMessageDispatchedEvent
 import top.azimkin.multiMessageBridge.api.events.AsyncChatMessageReceivedEvent
@@ -30,5 +31,10 @@ object CommonListener : Listener {
         if ("Minecraft" in enabled) event.eventManager.register(MinecraftReceiver(MultiMessageBridge.inst))
         if ("Discord" in enabled) event.eventManager.register(TelegramReceiver())
         if ("Telegram" in enabled) event.eventManager.register(DiscordReceiver())
+    }
+
+    @EventHandler
+    fun onServerLoaded(event: ServerLoadEvent) {
+        MultiMessageBridge.inst.setEnabled()
     }
 }
