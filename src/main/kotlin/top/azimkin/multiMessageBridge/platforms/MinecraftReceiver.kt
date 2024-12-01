@@ -1,6 +1,10 @@
 package top.azimkin.multiMessageBridge.platforms
 
 import io.papermc.paper.event.player.AsyncChatEvent
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.TranslatableComponent
+import net.kyori.adventure.text.flattener.ComponentFlattener
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
 import org.bukkit.Bukkit
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
@@ -8,6 +12,7 @@ import org.bukkit.event.Listener
 import org.bukkit.event.entity.EntityDamageByBlockEvent
 import org.bukkit.event.entity.EntityDamageByEntityEvent
 import org.bukkit.event.entity.PlayerDeathEvent
+import org.bukkit.event.player.PlayerAdvancementDoneEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.event.server.ServerLoadEvent
@@ -28,6 +33,7 @@ import top.azimkin.multiMessageBridge.utilities.deserialize
 import top.azimkin.multiMessageBridge.utilities.runSync
 import top.azimkin.multiMessageBridge.utilities.toHex
 import top.azimkin.multiMessageBridge.utilities.toPlainText
+import top.azimkin.multiMessageBridge.utilities.toPlainTextWithTranslatableAndArgs
 import java.awt.Color
 import java.io.File
 
@@ -89,23 +95,23 @@ class MinecraftReceiver(val plugin: JavaPlugin) :
     fun onPlayerDeath(event: PlayerDeathEvent) {
         val plain = event.deathMessage()?.toPlainText() ?: ""
         val messageToSend = if (config.translateDeathMessages) {
-            var key = plain.replace(event.player.displayName().toPlainText(), "%1\$s")
-            val cause = event.player.lastDamageCause
-            var damager = ""
-            if (cause is EntityDamageByEntityEvent) {
-                damager = cause.damager.customName()?.toPlainText() ?: cause.damager.name
-                key = key.replace(damager, "%2\$s")
-            } else if (cause is EntityDamageByBlockEvent) {
-                damager = cause.damager?.type?.name?.lowercase() ?: "block"
-                key = key.replace(damager, "%2\$s")
-            } else {
-                println("Unknown cause: $cause")
-            }
-            try {
-                deathMessages.getString(key)
-            } catch (_: Exception) {
-                plain
-            }.replace("%1\$s", event.player.displayName().toPlainText()).replace("%2\$s", damager)
+            val translatablePlainSerializer = PlainTextComponentSerializer
+                .builder()
+                .flattener(ComponentFlattener
+                    .basic()
+                    .toBuilder()
+                    .mapper(TranslatableComponent::class.java) { component ->
+                        var translation = try {
+                            deathMessages.getString(component.key())
+                        } catch (_: Throwable) {
+                            PlainTextComponentSerializer.plainText().serialize(component)
+                        }
+                        component.args().forEachIndexed { i, arg -> translation = translation.replace("%${i+1}\$s", arg.toPlainText()) }
+                        translation
+                    }
+                    .build()
+                ).build()
+            event.deathMessage()?.toPlainTextWithTranslatableAndArgs() ?: "Unknown death message"
         } else plain
 
         dispatch(PlayerLifeContext(event.player.name, messageToSend))
@@ -124,6 +130,11 @@ class MinecraftReceiver(val plugin: JavaPlugin) :
     @EventHandler
     fun onServerEnable(event: ServerLoadEvent) {
         dispatch(ServerSessionContext(true, event.type == ServerLoadEvent.LoadType.RELOAD))
+    }
+
+    @EventHandler
+    fun onAdvancement(event: PlayerAdvancementDoneEvent) {
+
     }
 
     override fun onDisable() {

@@ -3,6 +3,7 @@ package top.azimkin.multiMessageBridge
 import net.milkbowl.vault.chat.Chat
 import org.bukkit.Bukkit
 import org.bukkit.plugin.java.JavaPlugin
+import top.azimkin.mmb.Metrics
 import top.azimkin.multiMessageBridge.api.events.AsyncHeadImageProviderRegistrationEvent
 import top.azimkin.multiMessageBridge.api.events.ReceiverRegistrationEvent
 import top.azimkin.multiMessageBridge.commands.MainCommand
@@ -67,6 +68,7 @@ class MultiMessageBridge : JavaPlugin() {
             0L,
             pluginConfig.serverInfoUpdateTime.toLong()*20
         )
+        if (pluginConfig.metrics) Metrics(this, 24055)
     }
 
     override fun onDisable() {
