@@ -12,6 +12,7 @@ import top.azimkin.multiMessageBridge.platforms.TelegramReceiver
 import top.azimkin.multiMessageBridge.platforms.discord.DiscordReceiver
 
 object CommonListener : Listener {
+    /*
     // Just for test
     @EventHandler
     fun onMessageReceived(event: AsyncChatMessageReceivedEvent) {
@@ -23,7 +24,7 @@ object CommonListener : Listener {
     fun onMessageDispatched(event: AsyncChatMessageDispatchedEvent) {
         //MultiMessageBridge.inst.logger.info(event.context.toString())
 
-    }
+    }*/
 
     @EventHandler
     fun onReceiverRegistration(event: ReceiverRegistrationEvent) {

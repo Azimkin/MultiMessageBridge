@@ -20,6 +20,7 @@ import top.azimkin.multiMessageBridge.skins.HeadProviderManager
 import top.azimkin.multiMessageBridge.skins.LinkHeadProvider
 import top.azimkin.multiMessageBridge.skins.SkinHeadProvider
 import top.azimkin.multiMessageBridge.utilities.DateFormatter
+import top.azimkin.multiMessageBridge.utilities.Translator
 import top.azimkin.multiMessageBridge.utilities.runBukkitAsync
 import java.io.File
 
@@ -83,6 +84,7 @@ class MultiMessageBridge : JavaPlugin() {
             headProvider = mgr.createByName(pluginConfig.heads.provider, pluginConfig.heads.url)
         }
         setupMetadataProvider()
+        Translator.reload()
     }
 
     fun setEnabled() {

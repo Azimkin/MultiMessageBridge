@@ -20,5 +20,4 @@ commands:
     permission: mmb.admin
 
 libraries:
-  - 'org.json:json:20240303'
   - 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.0'

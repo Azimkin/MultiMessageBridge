@@ -43,7 +43,6 @@ repositories {
 
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.19.4-R0.1-SNAPSHOT")
-    compileOnly("org.json:json:20240303")
     implementation("com.github.pengrad:java-telegram-bot-api:7.9.1")
     implementation("eu.okaeri:okaeri-configs-yaml-bukkit:5.0.5")
 
@@ -57,6 +56,10 @@ dependencies {
     implementation("me.scarsz.jdaappender:jda5:1.2.3") {
         exclude(group="net.dv8tion", module = "JDA")
     }
+
+    // tests
+    testImplementation(kotlin("test"))
+    testImplementation("io.papermc.paper:paper-api:1.19.4-R0.1-SNAPSHOT")
 }
 
 val targetJavaVersion = 17
@@ -94,5 +97,9 @@ tasks {
     register("buildProd") {
         version = getVersionWithBuildNumber()
         dependsOn("shadowJar")
+    }
+
+    test {
+        useJUnitPlatform()
     }
 }

@@ -4,8 +4,7 @@ import eu.okaeri.configs.OkaeriConfig
 
 // simplified
 data class MinecraftReceiverConfig(
-    var messages: MinecraftMessageList = MinecraftMessageList(),
-    var translateDeathMessages: Boolean = false
+    var messages: MinecraftMessageList = MinecraftMessageList()
 ) : OkaeriConfig()
 
 // tiny copy of MessageList
