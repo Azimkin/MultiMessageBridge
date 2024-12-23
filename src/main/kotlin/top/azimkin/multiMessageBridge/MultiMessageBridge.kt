@@ -1,5 +1,7 @@
 package top.azimkin.multiMessageBridge
 
+import eu.okaeri.configs.ConfigManager
+import eu.okaeri.configs.yaml.bukkit.YamlBukkitConfigurer
 import net.milkbowl.vault.chat.Chat
 import org.bukkit.Bukkit
 import org.bukkit.plugin.java.JavaPlugin
@@ -7,7 +9,6 @@ import top.azimkin.mmb.Metrics
 import top.azimkin.multiMessageBridge.api.events.AsyncHeadImageProviderRegistrationEvent
 import top.azimkin.multiMessageBridge.api.events.ReceiverRegistrationEvent
 import top.azimkin.multiMessageBridge.commands.MainCommand
-import top.azimkin.multiMessageBridge.configuration.ConfigManager
 import top.azimkin.multiMessageBridge.configuration.MMBConfiguration
 import top.azimkin.multiMessageBridge.data.ServerInfoContext
 import top.azimkin.multiMessageBridge.listeners.CommonListener
@@ -37,8 +38,6 @@ class MultiMessageBridge : JavaPlugin() {
         private set
     lateinit var metadataProvider: PlayerMetadataProvider
         private set
-    private val configManager =
-        ConfigManager<MMBConfiguration>(MMBConfiguration::class.java, File(dataFolder, "config.yml"))
     lateinit var pluginConfig: MMBConfiguration
         private set
     val uptime: Long
@@ -66,7 +65,7 @@ class MultiMessageBridge : JavaPlugin() {
             this,
             this::updateServerInfo,
             0L,
-            pluginConfig.serverInfoUpdateTime.toLong()*20
+            pluginConfig.serverInfoUpdateTime.toLong() * 20
         )
         if (pluginConfig.metrics) Metrics(this, 24055)
     }
@@ -106,6 +105,12 @@ class MultiMessageBridge : JavaPlugin() {
     }
 
     override fun reloadConfig() {
-        pluginConfig = configManager.loadOrUseDefault()
+        pluginConfig = ConfigManager.create(MMBConfiguration::class.java) {
+            it.withConfigurer(YamlBukkitConfigurer());
+            it.withBindFile(File(dataFolder, "config.yml"));
+            it.withRemoveOrphans(true);
+            it.saveDefaults();
+            it.load(true);
+        }
     }
 }

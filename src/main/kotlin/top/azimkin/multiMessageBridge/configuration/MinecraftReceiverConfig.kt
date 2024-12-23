@@ -1,14 +1,16 @@
 package top.azimkin.multiMessageBridge.configuration
 
+import eu.okaeri.configs.OkaeriConfig
+
 // simplified
 data class MinecraftReceiverConfig(
-    val messages: MinecraftMessageList = MinecraftMessageList(),
-    val translateDeathMessages: Boolean = false
-)
+    var messages: MinecraftMessageList = MinecraftMessageList(),
+    var translateDeathMessages: Boolean = false
+) : OkaeriConfig()
 
 // tiny copy of MessageList
 data class MinecraftMessageList(
-    val messageBase: String = "<platform> <nickname> -> <message>",
-    val customFormats: Map<String, String> = emptyMap(),
-)
+    var messageBase: String = "<platform> <nickname> -> <message>",
+    var customFormats: Map<String, String> = emptyMap(),
+) : OkaeriConfig()
 

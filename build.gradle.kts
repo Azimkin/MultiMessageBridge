@@ -37,16 +37,15 @@ repositories {
     maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
     maven("https://nexus.scarsz.me/content/repositories/releases/")
     maven("https://jitpack.io")
+
+    maven("https://storehouse.okaeri.eu/repository/maven-public/")
 }
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:1.19.4-R0.1-SNAPSHOT") {
-        exclude(group="com.yaml")
-    }
+    compileOnly("io.papermc.paper:paper-api:1.19.4-R0.1-SNAPSHOT")
     compileOnly("org.json:json:20240303")
-    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.18.1")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.18.1")
     implementation("com.github.pengrad:java-telegram-bot-api:7.9.1")
+    implementation("eu.okaeri:okaeri-configs-yaml-bukkit:5.0.5")
 
     compileOnly("com.github.MilkBowl:VaultAPI:1.7.1")
     compileOnly("net.luckperms:api:5.4")
@@ -54,7 +53,6 @@ dependencies {
 
     implementation("net.dv8tion:JDA:5.1.2") {
         exclude(module="opus-java")
-        exclude(group="com.fasterxml")
     }
     implementation("me.scarsz.jdaappender:jda5:1.2.3") {
         exclude(group="net.dv8tion", module = "JDA")
@@ -94,7 +92,7 @@ tasks {
     }
 
     register("buildProd") {
-        dependsOn("shadowJar")
         version = getVersionWithBuildNumber()
+        dependsOn("shadowJar")
     }
 }

@@ -1,7 +1,6 @@
 package top.azimkin.multiMessageBridge.platforms
 
 import io.papermc.paper.event.player.AsyncChatEvent
-import net.kyori.adventure.text.Component
 import net.kyori.adventure.text.TranslatableComponent
 import net.kyori.adventure.text.flattener.ComponentFlattener
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer
@@ -9,8 +8,6 @@ import org.bukkit.Bukkit
 import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
-import org.bukkit.event.entity.EntityDamageByBlockEvent
-import org.bukkit.event.entity.EntityDamageByEntityEvent
 import org.bukkit.event.entity.PlayerDeathEvent
 import org.bukkit.event.player.PlayerAdvancementDoneEvent
 import org.bukkit.event.player.PlayerJoinEvent
@@ -106,7 +103,9 @@ class MinecraftReceiver(val plugin: JavaPlugin) :
                         } catch (_: Throwable) {
                             PlainTextComponentSerializer.plainText().serialize(component)
                         }
-                        component.args().forEachIndexed { i, arg -> translation = translation.replace("%${i+1}\$s", arg.toPlainText()) }
+                        component.args().forEachIndexed { i, arg ->
+                            translation = translation.replace("%${i + 1}\$s", arg.toPlainText())
+                        }
                         translation
                     }
                     .build()

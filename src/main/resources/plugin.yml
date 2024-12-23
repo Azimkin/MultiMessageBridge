@@ -7,8 +7,6 @@ load: POSTWORLD
 authors: [ Azimkin ]
 description: Message bridge between TG, Discord and minecraft
 website: https://azimkin.top
-depend:
-  - MCKotlin-Paper
 softdepend:
   - Vault
   - LuckPerms
@@ -23,4 +21,4 @@ commands:
 
 libraries:
   - 'org.json:json:20240303'
-  - "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.18.1"
+  - 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.0'

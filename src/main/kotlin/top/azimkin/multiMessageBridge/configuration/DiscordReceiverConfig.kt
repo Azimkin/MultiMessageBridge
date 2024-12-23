@@ -1,26 +1,28 @@
 package top.azimkin.multiMessageBridge.configuration
 
+import eu.okaeri.configs.OkaeriConfig
+
 data class DiscordReceiverConfig(
-    val bot: BotConfiguration = BotConfiguration(),
-    val messages: MessageList = MessageList(customMessageType = "embed", customProperties = mapOf("color" to "0:0:0")),
-    val advanced: AdvancedConfiguration = AdvancedConfiguration()
-)
+    var bot: BotConfiguration = BotConfiguration(),
+    var messages: MessageList = MessageList(customMessageType = "embed", customProperties = mapOf("color" to "0:0:0")),
+    var advanced: AdvancedConfiguration = AdvancedConfiguration()
+) : OkaeriConfig()
 
 data class BotConfiguration(
-    val token: String = "paste token here",
-    val guild: Long = -1,
-    val channels: Map<String, ChannelConfiguration> = mapOf(
+    var token: String = "paste token here",
+    var guild: Long = -1,
+    var channels: Map<String, ChannelConfiguration> = mapOf(
         "messages" to ChannelConfiguration("main_text"),
         "console" to ChannelConfiguration("console"),
     )
-)
+) : OkaeriConfig()
 
 data class ChannelConfiguration(
-    val type: String = "unknown",
-    val id: Long = 0,
-    val description: String? = null,
-)
+    var type: String = "unknown",
+    var id: Long = 0,
+    var description: String? = null,
+) : OkaeriConfig()
 
 data class AdvancedConfiguration(
-    val jdaProvider: String = "default",
-)
+    var jdaProvider: String = "default",
+) : OkaeriConfig()
