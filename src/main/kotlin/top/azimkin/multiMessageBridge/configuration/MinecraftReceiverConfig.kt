@@ -1,11 +1,21 @@
 package top.azimkin.multiMessageBridge.configuration
 
 import eu.okaeri.configs.OkaeriConfig
+import eu.okaeri.configs.annotation.Comment
+import io.papermc.paper.advancement.AdvancementDisplay
 
 // simplified
 data class MinecraftReceiverConfig(
-    var messages: MinecraftMessageList = MinecraftMessageList()
-) : OkaeriConfig()
+    //TODO: add boolean switches for any dispatcher
+    @Comment("If enabled will filter advancements by rarity")
+    var filterAdvancements: Boolean = false,
+    private var enabledAdvancementRarity: List<String> = AdvancementDisplay.Frame.entries.map { it.name },
+    var messages: MinecraftMessageList = MinecraftMessageList(),
+) : OkaeriConfig() {
+    fun enabledAdvancementRarity(): List<AdvancementDisplay.Frame> {
+        return enabledAdvancementRarity.map { AdvancementDisplay.Frame.valueOf(it.uppercase()) }
+    }
+}
 
 // tiny copy of MessageList
 data class MinecraftMessageList(

@@ -9,19 +9,21 @@ import com.pengrad.telegrambot.request.SendMessage
 import top.azimkin.multiMessageBridge.MultiMessageBridge
 import top.azimkin.multiMessageBridge.api.events.AsyncTelegramOnUpdateEvent
 import top.azimkin.multiMessageBridge.configuration.TelegramReceiverConfig
+import top.azimkin.multiMessageBridge.data.AdvancementContext
 import top.azimkin.multiMessageBridge.data.MessageContext
 import top.azimkin.multiMessageBridge.data.PlayerLifeContext
 import top.azimkin.multiMessageBridge.data.ServerSessionContext
 import top.azimkin.multiMessageBridge.data.SessionContext
 import top.azimkin.multiMessageBridge.platforms.dispatchers.MessageDispatcher
+import top.azimkin.multiMessageBridge.platforms.handlers.AdvancementHandler
 import top.azimkin.multiMessageBridge.platforms.handlers.MessageHandler
 import top.azimkin.multiMessageBridge.platforms.handlers.PlayerLifeHandler
 import top.azimkin.multiMessageBridge.platforms.handlers.ServerSessionHandler
 import top.azimkin.multiMessageBridge.platforms.handlers.SessionHandler
-import top.azimkin.multiMessageBridge.utilities.format
+import top.azimkin.multiMessageBridge.utilities.formatByMap
 
 class TelegramReceiver : ConfigurableReceiver<TelegramReceiverConfig>("Telegram", TelegramReceiverConfig::class.java),
-    MessageHandler,
+    MessageHandler, AdvancementHandler,
     MessageDispatcher, PlayerLifeHandler, SessionHandler, ServerSessionHandler {
     val token = config.bot.token
     val bot = TelegramBot(token).also {
@@ -41,7 +43,7 @@ class TelegramReceiver : ConfigurableReceiver<TelegramReceiverConfig>("Telegram"
     private fun parseFormat(context: MessageContext): String {
         val base = (config.messages.customFormats[context.platform] ?: config.messages.messageBase).format
 
-        return base.format(
+        return base.formatByMap(
             mapOf(
                 "nickname" to context.senderName,
                 "platform" to context.platform,
@@ -56,7 +58,7 @@ class TelegramReceiver : ConfigurableReceiver<TelegramReceiverConfig>("Telegram"
     override fun handle(context: PlayerLifeContext) {
         val format = config.messages.death.format
         sendMessage(
-            format.format(
+            format.formatByMap(
                 mapOf(
                     "nickname" to context.playerName,
                     "death_message" to context.deathSource
@@ -83,7 +85,7 @@ class TelegramReceiver : ConfigurableReceiver<TelegramReceiverConfig>("Telegram"
             config.messages.leave
         }.format
         sendMessage(
-            message.format(
+            message.formatByMap(
                 mapOf(
                     "nickname" to context.playerName,
                     "is_joined" to context.isJoined.toString(),
@@ -115,7 +117,6 @@ class TelegramReceiver : ConfigurableReceiver<TelegramReceiverConfig>("Telegram"
     }
 
 
-
     override fun handle(context: ServerSessionContext) {
         if (context.isTurnedOn) {
             sendMessage(config.messages.serverEnabled.format)
@@ -133,7 +134,11 @@ class TelegramReceiver : ConfigurableReceiver<TelegramReceiverConfig>("Telegram"
         }
         if (config.debug.preConfiguredDebug) {
             MultiMessageBridge.inst.logger.info("Preconfigure debug enabled! Please, disable it in Telegram.yml after setting it up!")
-            MultiMessageBridge.inst.logger.info("    ChatId: ${update.message()?.chat()?.id()} ThreadId: ${update.message()?.messageThreadId()} Message: ${update.message()?.text()}")
+            MultiMessageBridge.inst.logger.info(
+                "    ChatId: ${
+                    update.message()?.chat()?.id()
+                } ThreadId: ${update.message()?.messageThreadId()} Message: ${update.message()?.text()}"
+            )
         }
         if (update.message()?.chat()?.id() == config.bot.mainChat) {
             if (config.bot.mainThread < 0 || (update.message()?.messageThreadId() == config.bot.mainThread)) {
@@ -152,6 +157,19 @@ class TelegramReceiver : ConfigurableReceiver<TelegramReceiverConfig>("Telegram"
                 )
             }
         }
+    }
+
+    override fun handle(context: AdvancementContext) {
+        sendMessage(
+            config.messages.advancementGrant.format.formatByMap(
+                mapOf(
+                    "nickname" to context.playerName,
+                    "advancement" to context.advancementName,
+                    "description" to context.description,
+                    "rarity" to context.rarity.name,
+                )
+            )
+        )
     }
 
     companion object {

@@ -1,5 +1,6 @@
 package top.azimkin.multiMessageBridge.platforms
 
+import io.papermc.paper.advancement.AdvancementDisplay
 import io.papermc.paper.event.player.AsyncChatEvent
 import net.kyori.adventure.text.Component
 import org.bukkit.Bukkit
@@ -14,10 +15,12 @@ import org.bukkit.event.server.ServerLoadEvent
 import org.bukkit.plugin.java.JavaPlugin
 import top.azimkin.multiMessageBridge.MultiMessageBridge
 import top.azimkin.multiMessageBridge.configuration.MinecraftReceiverConfig
+import top.azimkin.multiMessageBridge.data.AdvancementContext
 import top.azimkin.multiMessageBridge.data.MessageContext
 import top.azimkin.multiMessageBridge.data.PlayerLifeContext
 import top.azimkin.multiMessageBridge.data.ServerSessionContext
 import top.azimkin.multiMessageBridge.data.SessionContext
+import top.azimkin.multiMessageBridge.platforms.dispatchers.AdvancementDispatcher
 import top.azimkin.multiMessageBridge.platforms.dispatchers.MessageDispatcher
 import top.azimkin.multiMessageBridge.platforms.dispatchers.PlayerLifeDispatcher
 import top.azimkin.multiMessageBridge.platforms.dispatchers.ServerSessionDispatcher
@@ -32,7 +35,8 @@ import java.awt.Color
 
 class MinecraftReceiver(val plugin: JavaPlugin) :
     ConfigurableReceiver<MinecraftReceiverConfig>("Minecraft", MinecraftReceiverConfig::class.java), Listener,
-    MessageHandler, MessageDispatcher, PlayerLifeDispatcher, ServerSessionDispatcher, SessionDispatcher {
+    MessageHandler, MessageDispatcher, PlayerLifeDispatcher, ServerSessionDispatcher, SessionDispatcher,
+    AdvancementDispatcher {
 
     init {
         plugin.server.pluginManager.registerEvents(this, plugin)
@@ -108,7 +112,16 @@ class MinecraftReceiver(val plugin: JavaPlugin) :
 
     @EventHandler
     fun onAdvancement(event: PlayerAdvancementDoneEvent) {
-
+        val rarity = event.advancement.display?.frame() ?: AdvancementDisplay.Frame.TASK
+        if (config.filterAdvancements && rarity !in config.enabledAdvancementRarity()) return
+        dispatch(
+            AdvancementContext(
+                event.player.name,
+                Translator.optional(event.advancement.displayName()),
+                Translator.optional(event.advancement.display?.description() ?: Component.empty()),
+                rarity
+            )
+        )
     }
 
     override fun onDisable() {

@@ -61,6 +61,12 @@ data class MessageList(
     var firstJoin: MessageConfiguration = MessageConfiguration("<nickname> has joined the game for first time!", customMessageType, customProperties),
     var serverEnabled: MessageConfiguration = MessageConfiguration("Server enabled!"),
     var serverDisabled: MessageConfiguration = MessageConfiguration("Server disabled!"),
+    @Comment("Possible replacements: ")
+    @Comment("  <nickname> - player nickname")
+    @Comment("  <advancement> - advancement name")
+    @Comment("  <description> - advancement description")
+    @Comment("  <rarity> - advancement rarity")
+    var advancementGrant: MessageConfiguration = MessageConfiguration("<nickname> has made the advancement <advancement>\n  <description>")
 ) : OkaeriConfig()
 
 data class MessageConfiguration(

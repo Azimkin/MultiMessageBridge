@@ -4,12 +4,12 @@ import me.scarsz.jdaappender.ChannelLoggingHandler
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
-import top.azimkin.multiMessageBridge.server.ServerInfoProvider
 import top.azimkin.multiMessageBridge.MultiMessageBridge
 import top.azimkin.multiMessageBridge.api.events.AsyncDiscordMessageEvent
 import top.azimkin.multiMessageBridge.api.events.JdaProviderRegistrationEvent
 import top.azimkin.multiMessageBridge.configuration.ChannelConfiguration
 import top.azimkin.multiMessageBridge.configuration.DiscordReceiverConfig
+import top.azimkin.multiMessageBridge.data.AdvancementContext
 import top.azimkin.multiMessageBridge.data.ConsoleMessageContext
 import top.azimkin.multiMessageBridge.data.MessageContext
 import top.azimkin.multiMessageBridge.data.PlayerLifeContext
@@ -22,19 +22,21 @@ import top.azimkin.multiMessageBridge.platforms.discord.jdaproviders.JdaProvider
 import top.azimkin.multiMessageBridge.platforms.discord.jdaproviders.JdaProviderManager
 import top.azimkin.multiMessageBridge.platforms.dispatchers.ConsoleMessageDispatcher
 import top.azimkin.multiMessageBridge.platforms.dispatchers.MessageDispatcher
+import top.azimkin.multiMessageBridge.platforms.handlers.AdvancementHandler
 import top.azimkin.multiMessageBridge.platforms.handlers.MessageHandler
 import top.azimkin.multiMessageBridge.platforms.handlers.PlayerLifeHandler
 import top.azimkin.multiMessageBridge.platforms.handlers.ServerInfoHandler
 import top.azimkin.multiMessageBridge.platforms.handlers.ServerSessionHandler
 import top.azimkin.multiMessageBridge.platforms.handlers.SessionHandler
-import top.azimkin.multiMessageBridge.utilities.format
+import top.azimkin.multiMessageBridge.server.ServerInfoProvider
+import top.azimkin.multiMessageBridge.utilities.formatByMap
 import top.azimkin.multiMessageBridge.utilities.parseColor
 import java.awt.Color
 import kotlin.collections.ArrayDeque
 
 class DiscordReceiver : ConfigurableReceiver<DiscordReceiverConfig>("Discord", DiscordReceiverConfig::class.java),
     MessageHandler, MessageDispatcher, PlayerLifeHandler, SessionHandler, ServerSessionHandler,
-    ConsoleMessageDispatcher, ServerInfoHandler {
+    ConsoleMessageDispatcher, ServerInfoHandler, AdvancementHandler {
     private val executeQueue = ArrayDeque<() -> Unit>()
     private lateinit var console: ChannelLoggingHandler
 
@@ -50,7 +52,7 @@ class DiscordReceiver : ConfigurableReceiver<DiscordReceiverConfig>("Discord", D
 
     override fun handle(context: MessageContext) {
         val base = getMessageOrBase(context.platform)
-        val preparedMessage = base.format(
+        val preparedMessage = base.formatByMap(
             mapOf(
                 "role" to (context.role ?: ""),
                 "nickname" to context.senderName,
@@ -70,7 +72,7 @@ class DiscordReceiver : ConfigurableReceiver<DiscordReceiverConfig>("Discord", D
         val messageConfig = config.messages.death
         sendSimpleEmbed(
             context.playerName,
-            messageConfig.format.format(
+            messageConfig.format.formatByMap(
                 mapOf(
                     "nickname" to context.playerName,
                     "death_message" to context.deathSource
@@ -101,7 +103,7 @@ class DiscordReceiver : ConfigurableReceiver<DiscordReceiverConfig>("Discord", D
 
         sendSimpleEmbed(
             context.playerName,
-            message.format(
+            message.formatByMap(
                 mapOf(
                     "nickname" to context.playerName,
                     "is_joined" to context.isJoined.toString(),
@@ -256,5 +258,18 @@ class DiscordReceiver : ConfigurableReceiver<DiscordReceiverConfig>("Discord", D
                 ?.setTopic(ServerInfoProvider.parse(if (j.description == "") context.text else j.description))
                 ?.queue()
         }
+    }
+
+    override fun handle(context: AdvancementContext) {
+        sendMessageToChannel(
+            config.messages.advancementGrant.format.formatByMap(
+                mapOf(
+                    "nickname" to context.playerName,
+                    "advancement" to context.advancementName,
+                    "description" to context.description,
+                    "rarity" to context.rarity.name,
+                )
+            )
+        )
     }
 }

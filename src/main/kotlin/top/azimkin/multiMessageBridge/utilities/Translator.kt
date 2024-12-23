@@ -32,6 +32,10 @@ object Translator {
         return rawString
     }
 
+    fun optional(component: Component): String {
+        return if (MultiMessageBridge.inst.pluginConfig.translateMessages) translate(component) else component.toPlainText()
+    }
+
     fun reload() {
         //just an empty map
         translations = mapOf()
