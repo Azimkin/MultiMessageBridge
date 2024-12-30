@@ -1,11 +1,13 @@
 package top.azimkin.multiMessageBridge.platforms
 
+import com.pengrad.telegrambot.Callback
 import com.pengrad.telegrambot.TelegramBot
 import com.pengrad.telegrambot.UpdatesListener
 import com.pengrad.telegrambot.model.PhotoSize
 import com.pengrad.telegrambot.model.Update
 import com.pengrad.telegrambot.request.GetFile
 import com.pengrad.telegrambot.request.SendMessage
+import com.pengrad.telegrambot.response.SendResponse
 import top.azimkin.multiMessageBridge.MultiMessageBridge
 import top.azimkin.multiMessageBridge.api.events.AsyncTelegramOnUpdateEvent
 import top.azimkin.multiMessageBridge.configuration.TelegramReceiverConfig
@@ -21,17 +23,24 @@ import top.azimkin.multiMessageBridge.platforms.handlers.PlayerLifeHandler
 import top.azimkin.multiMessageBridge.platforms.handlers.ServerSessionHandler
 import top.azimkin.multiMessageBridge.platforms.handlers.SessionHandler
 import top.azimkin.multiMessageBridge.utilities.formatByMap
+import java.io.IOException
 
 class TelegramReceiver : ConfigurableReceiver<TelegramReceiverConfig>("Telegram", TelegramReceiverConfig::class.java),
     MessageHandler, AdvancementHandler,
     MessageDispatcher, PlayerLifeHandler, SessionHandler, ServerSessionHandler {
     val token = config.bot.token
+    var updateErrorsInPeriod: Int = 0
     val bot = TelegramBot(token).also {
-        it.setUpdatesListener { updates ->
+        it.setUpdatesListener({ updates ->
             for (update in updates) {
                 processUpdate(update)
             }
+            updateErrorsInPeriod = 0
             return@setUpdatesListener UpdatesListener.CONFIRMED_UPDATES_ALL
+        }) { e ->
+            updateErrorsInPeriod++
+            if (updateErrorsInPeriod % 10 == 0)
+                MultiMessageBridge.inst.logger.warning("Unable to get updates from telegram API!\nErrors in period: $updateErrorsInPeriod")
         }
     }
 
@@ -67,11 +76,30 @@ class TelegramReceiver : ConfigurableReceiver<TelegramReceiverConfig>("Telegram"
         )
     }
 
-    fun sendMessage(text: String, theme: String = "chat") {
+    fun sendMessage(text: String, theme: String = "chat", times: Int = 0) {
         bot.execute(
             SendMessage(config.bot.mainChat, text).apply {
                 if (config.bot.mainThread > -1) messageThreadId(config.bot.mainThread)
-            })
+            },
+            object : Callback<SendMessage, SendResponse> {
+                override fun onResponse(
+                    request: SendMessage?,
+                    response: SendResponse?
+                ) {
+                }
+
+                override fun onFailure(request: SendMessage?, e: IOException?) {
+                    if (times < config.bot.sendMessageLimit) {
+                        Thread.sleep(config.bot.timeUntilNextTry)
+                        sendMessage(text, theme, times + 1)
+                    } else {
+                        MultiMessageBridge.inst.logger.warning("Unable to send message to telegram, limit of tries has reached\nContent: $text")
+                        e?.printStackTrace()
+                    }
+                }
+            }
+        )
+
     }
 
     override fun handle(context: SessionContext) {
