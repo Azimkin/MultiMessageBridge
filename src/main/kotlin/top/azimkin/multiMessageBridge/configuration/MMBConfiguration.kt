@@ -28,7 +28,9 @@ data class MMBConfiguration(
     @Comment("Should plugin translate death, advancement messages from default locale (English)")
     @Comment("Translations brings from the translations.json file in plugin root folder")
     @Comment("Its just renamed file like https://github.com/InventivetalentDev/minecraft-assets/blob/1.21.4/assets/minecraft/lang/en_us.json")
-    var translateMessages: Boolean = false
+    var translateMessages: Boolean = false,
+    @Comment("Should plugin copy messages from every receiver to console")
+    var sendMessagesToConsole: Boolean = true,
 ) : OkaeriConfig()
 
 data class HeadsConfiguration(
