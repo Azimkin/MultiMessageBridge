@@ -117,7 +117,6 @@ class DiscordReceiver(val em: MessagingEventManager) :
         }
     }
 
-    @JvmOverloads
     fun sendSimpleEmbed(author: String, message: String, color: Color = Color.BLACK, channel: String = "main_text") =
         addAction {
             val channel = findChannel(channel)?.id ?: return@addAction
@@ -131,7 +130,6 @@ class DiscordReceiver(val em: MessagingEventManager) :
             ).queue()
         }
 
-    @JvmOverloads
     fun sendMessageToChannel(message: String, channel: String = "main_text") = addAction {
         val channel = findChannel(channel)?.id ?: return@addAction
         val textChannel = jda.get().getTextChannelById(channel) ?: return@addAction
@@ -165,7 +163,8 @@ class DiscordReceiver(val em: MessagingEventManager) :
 
             "console" -> {
                 console.dumpStack()
-                dispatch(ConsoleMessageContext(event.message.contentRaw))
+                if (config.bot.commandsShouldStartsWithPrefix && !event.message.contentRaw.startsWith(config.bot.commandPrefix)) return
+                dispatch(ConsoleMessageContext(event.message.contentRaw.substring(config.bot.commandPrefix.length)))
             }
         }
     }

@@ -18,9 +18,7 @@ class CommonJdaProvider(token: String, receiver: DiscordReceiver) : JdaProvider,
         .build()
         .apply {
             awaitReady()
-            while (initializeHandlers.isNotEmpty()) {
-                initializeHandlers.removeFirst()(this)
-            }
+            runQueue()
         }
 
     override fun get(): JDA = jda
@@ -29,6 +27,13 @@ class CommonJdaProvider(token: String, receiver: DiscordReceiver) : JdaProvider,
 
     override fun addInitializeListener(listener: (JDA) -> Unit) {
         initializeHandlers.add(listener)
+        if (isInitialized()) runQueue()
+    }
+
+    private fun runQueue() {
+        while (initializeHandlers.isNotEmpty()) {
+            initializeHandlers.removeFirst()(jda)
+        }
     }
 
     override fun shutdown() {

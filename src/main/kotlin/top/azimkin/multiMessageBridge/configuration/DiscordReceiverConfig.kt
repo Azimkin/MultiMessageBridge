@@ -17,7 +17,10 @@ data class BotConfiguration(
     var channels: Map<String, ChannelConfiguration> = mapOf(
         "messages" to ChannelConfiguration("main_text"),
         "console" to ChannelConfiguration("console"),
-    )
+    ),
+    @Comment("Should plugin ignore messages in console without prefix in start")
+    var commandsShouldStartsWithPrefix: Boolean = true,
+    var commandPrefix: String = "!/"
 ) : OkaeriConfig()
 
 data class ChannelConfiguration(
