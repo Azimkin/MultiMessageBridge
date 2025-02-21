@@ -20,4 +20,4 @@ commands:
     permission: mmb.admin
 
 libraries:
-  - 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.10'
+  - 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.0'

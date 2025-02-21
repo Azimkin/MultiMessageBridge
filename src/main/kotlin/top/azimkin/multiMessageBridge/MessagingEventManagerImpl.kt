@@ -7,8 +7,10 @@ import top.azimkin.multiMessageBridge.data.*
 import top.azimkin.multiMessageBridge.platforms.BaseReceiver
 import top.azimkin.multiMessageBridge.platforms.dispatchers.*
 import top.azimkin.multiMessageBridge.platforms.handlers.*
+import java.util.*
 import java.util.concurrent.CompletableFuture.runAsync
-import java.util.function.Supplier
+import kotlin.reflect.javaType
+import kotlin.reflect.typeOf
 
 class MessagingEventManagerImpl : MessagingEventManager {
     private val logger = LoggerFactory.getLogger("MessagingEventManagerImpl")
@@ -17,7 +19,7 @@ class MessagingEventManagerImpl : MessagingEventManager {
     override val receivers: List<BaseReceiver>
         get() = baseReceivers.values.toList()
 
-    private val registeredReceivers = HashMap<String, Supplier<BaseReceiver>>()
+    private val registeredReceivers = HashMap<String, () -> BaseReceiver>()
 
     override fun dispatch(
         dispatcher: MessageDispatcher,
@@ -120,7 +122,7 @@ class MessagingEventManagerImpl : MessagingEventManager {
 
     override fun enable(name: String) {
         try {
-            val manager = registeredReceivers[name]?.get() ?: run {
+            val manager = registeredReceivers[name]?.invoke() ?: run {
                 logger.warn("Unknown receiver $name")
                 return
             }
@@ -138,7 +140,7 @@ class MessagingEventManagerImpl : MessagingEventManager {
             return
         }
         logger.info("RegisteredReceivers: ")
-        var c = 1
+        var c = 1;
         for ((i, _) in registeredReceivers) {
             logger.info("${c++}. $i")
         }
@@ -151,7 +153,7 @@ class MessagingEventManagerImpl : MessagingEventManager {
         enable(registeredReceivers.keys.toList())
     }
 
-    override fun register(vararg receivers: Pair<String, Supplier<BaseReceiver>>) {
+    override fun register(vararg receivers: Pair<String, () -> BaseReceiver>) {
         registeredReceivers.putAll(receivers)
     }
 

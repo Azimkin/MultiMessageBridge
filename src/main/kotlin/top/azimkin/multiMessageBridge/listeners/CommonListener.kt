@@ -8,7 +8,6 @@ import top.azimkin.multiMessageBridge.api.events.ReceiverRegistrationEvent
 import top.azimkin.multiMessageBridge.platforms.MinecraftReceiver
 import top.azimkin.multiMessageBridge.platforms.TelegramReceiver
 import top.azimkin.multiMessageBridge.platforms.discord.DiscordReceiver
-import java.util.function.Supplier
 
 object CommonListener : Listener {
     /*
@@ -28,9 +27,9 @@ object CommonListener : Listener {
     @EventHandler
     fun onReceiverRegistration(event: ReceiverRegistrationEvent) {
         event.eventManager.register(
-            "Minecraft" to Supplier { MinecraftReceiver(MultiMessageBridge.inst) },
-            "Discord" to Supplier { DiscordReceiver(event.eventManager) },
-            "Telegram" to Supplier { TelegramReceiver(event.eventManager) },
+            "Minecraft" to { MinecraftReceiver(MultiMessageBridge.inst) },
+            "Discord" to { DiscordReceiver(event.eventManager) },
+            "Telegram" to { TelegramReceiver(event.eventManager) },
         )
     }
 

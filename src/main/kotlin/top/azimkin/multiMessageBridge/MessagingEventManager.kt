@@ -3,7 +3,6 @@ package top.azimkin.multiMessageBridge
 import top.azimkin.multiMessageBridge.data.*
 import top.azimkin.multiMessageBridge.platforms.BaseReceiver
 import top.azimkin.multiMessageBridge.platforms.dispatchers.*
-import java.util.function.Supplier
 
 interface MessagingEventManager {
     val receivers: List<BaseReceiver>
@@ -22,7 +21,7 @@ interface MessagingEventManager {
 
     fun dispatch(context: ServerInfoContext)
 
-    fun register(vararg receivers: Pair<String, Supplier<BaseReceiver>>)
+    fun register(vararg receivers: Pair<String, () -> BaseReceiver>)
 
     fun enable(name: String)
 
