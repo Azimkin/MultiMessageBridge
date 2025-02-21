@@ -19,7 +19,8 @@ import top.azimkin.multiMessageBridge.utilities.formatByMap
 import java.io.IOException
 import java.util.regex.Pattern
 
-class TelegramReceiver(val em: MessagingEventManager) : ConfigurableReceiver<TelegramReceiverConfig>("Telegram", TelegramReceiverConfig::class.java),
+class TelegramReceiver(val em: MessagingEventManager) :
+    ConfigurableReceiver<TelegramReceiverConfig>("Telegram", TelegramReceiverConfig::class.java),
     MessageHandler, AdvancementHandler,
     MessageDispatcher, PlayerLifeHandler, SessionHandler, ServerSessionHandler {
     val token = config.bot.token
