@@ -9,30 +9,18 @@ import top.azimkin.multiMessageBridge.api.events.AsyncDiscordMessageEvent
 import top.azimkin.multiMessageBridge.api.events.JdaProviderRegistrationEvent
 import top.azimkin.multiMessageBridge.configuration.ChannelConfiguration
 import top.azimkin.multiMessageBridge.configuration.DiscordReceiverConfig
-import top.azimkin.multiMessageBridge.data.AdvancementContext
-import top.azimkin.multiMessageBridge.data.ConsoleMessageContext
-import top.azimkin.multiMessageBridge.data.MessageContext
-import top.azimkin.multiMessageBridge.data.PlayerLifeContext
-import top.azimkin.multiMessageBridge.data.ServerInfoContext
-import top.azimkin.multiMessageBridge.data.ServerSessionContext
-import top.azimkin.multiMessageBridge.data.SessionContext
+import top.azimkin.multiMessageBridge.data.*
 import top.azimkin.multiMessageBridge.platforms.ConfigurableReceiver
 import top.azimkin.multiMessageBridge.platforms.discord.jdaproviders.CommonJdaProvider
 import top.azimkin.multiMessageBridge.platforms.discord.jdaproviders.JdaProvider
 import top.azimkin.multiMessageBridge.platforms.discord.jdaproviders.JdaProviderManager
 import top.azimkin.multiMessageBridge.platforms.dispatchers.ConsoleMessageDispatcher
 import top.azimkin.multiMessageBridge.platforms.dispatchers.MessageDispatcher
-import top.azimkin.multiMessageBridge.platforms.handlers.AdvancementHandler
-import top.azimkin.multiMessageBridge.platforms.handlers.MessageHandler
-import top.azimkin.multiMessageBridge.platforms.handlers.PlayerLifeHandler
-import top.azimkin.multiMessageBridge.platforms.handlers.ServerInfoHandler
-import top.azimkin.multiMessageBridge.platforms.handlers.ServerSessionHandler
-import top.azimkin.multiMessageBridge.platforms.handlers.SessionHandler
+import top.azimkin.multiMessageBridge.platforms.handlers.*
 import top.azimkin.multiMessageBridge.server.ServerInfoProvider
 import top.azimkin.multiMessageBridge.utilities.formatByMap
 import top.azimkin.multiMessageBridge.utilities.parseColor
 import java.awt.Color
-import kotlin.collections.ArrayDeque
 
 class DiscordReceiver : ConfigurableReceiver<DiscordReceiverConfig>("Discord", DiscordReceiverConfig::class.java),
     MessageHandler, MessageDispatcher, PlayerLifeHandler, SessionHandler, ServerSessionHandler,

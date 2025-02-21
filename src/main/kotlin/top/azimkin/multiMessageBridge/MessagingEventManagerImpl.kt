@@ -1,31 +1,17 @@
 package top.azimkin.multiMessageBridge
 
 import org.bukkit.Bukkit
+import org.slf4j.LoggerFactory
 import top.azimkin.multiMessageBridge.api.events.AsyncChatMessageDispatchedEvent
-import top.azimkin.multiMessageBridge.data.AdvancementContext
-import top.azimkin.multiMessageBridge.data.ConsoleMessageContext
-import top.azimkin.multiMessageBridge.data.MessageContext
-import top.azimkin.multiMessageBridge.data.PlayerLifeContext
-import top.azimkin.multiMessageBridge.data.ServerInfoContext
-import top.azimkin.multiMessageBridge.data.ServerSessionContext
-import top.azimkin.multiMessageBridge.data.SessionContext
+import top.azimkin.multiMessageBridge.data.*
 import top.azimkin.multiMessageBridge.platforms.BaseReceiver
-import top.azimkin.multiMessageBridge.platforms.dispatchers.AdvancementDispatcher
-import top.azimkin.multiMessageBridge.platforms.dispatchers.ConsoleMessageDispatcher
-import top.azimkin.multiMessageBridge.platforms.dispatchers.MessageDispatcher
-import top.azimkin.multiMessageBridge.platforms.dispatchers.PlayerLifeDispatcher
-import top.azimkin.multiMessageBridge.platforms.dispatchers.ServerSessionDispatcher
-import top.azimkin.multiMessageBridge.platforms.dispatchers.SessionDispatcher
-import top.azimkin.multiMessageBridge.platforms.handlers.AdvancementHandler
-import top.azimkin.multiMessageBridge.platforms.handlers.MessageHandler
-import top.azimkin.multiMessageBridge.platforms.handlers.PlayerLifeHandler
-import top.azimkin.multiMessageBridge.platforms.handlers.ServerInfoHandler
-import top.azimkin.multiMessageBridge.platforms.handlers.ServerSessionHandler
-import top.azimkin.multiMessageBridge.platforms.handlers.SessionHandler
-import java.util.LinkedList
+import top.azimkin.multiMessageBridge.platforms.dispatchers.*
+import top.azimkin.multiMessageBridge.platforms.handlers.*
+import java.util.*
 import java.util.concurrent.CompletableFuture.runAsync
 
 class MessagingEventManagerImpl : MessagingEventManager {
+    private val logger = LoggerFactory.getLogger(this.javaClass)
     private val messageDispatchers: MutableList<MessageDispatcher> = LinkedList()
     private val sessionDispatchers: MutableList<SessionDispatcher> = LinkedList()
     private val serverSessionDispatchers: MutableList<ServerSessionDispatcher> = LinkedList()
@@ -133,12 +119,18 @@ class MessagingEventManagerImpl : MessagingEventManager {
                 MultiMessageBridge.inst.logger.warning("Unable to send advancementContext in ${handler.javaClass.name}")
             }
         }
-    }.let {  }
+    }.let { }
 
     override fun dispatch(context: ServerInfoContext) {
         for (handler in serverInfoHandlers) {
             handler.handle(context)
         }
+    }
+
+    override fun enable(name: String) {
+    }
+
+    override fun enableAll() {
     }
 
     override fun register(vararg managers: BaseReceiver) {
@@ -195,9 +187,5 @@ class MessagingEventManagerImpl : MessagingEventManager {
 
     override fun reload(name: String) {
         receivers.forEach { if (it.name == name) it.reload() }
-    }
-
-    companion object {
-        val instance = MessagingEventManagerImpl()
     }
 }

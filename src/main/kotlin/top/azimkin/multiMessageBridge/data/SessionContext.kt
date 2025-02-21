@@ -4,4 +4,4 @@ data class SessionContext(
     val playerName: String,
     val isJoined: Boolean,
     val isFirstJoined: Boolean = false,
-)
+) : BaseContext

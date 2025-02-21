@@ -23,6 +23,7 @@ fun Component.toPlainText(): String {
 fun Component.toMiniMessage(): String {
     return MiniMessage.miniMessage().serialize(this)
 }
+
 fun String.fbm(replacements: Map<String, String>) = formatByMap(replacements)
 fun String.formatByMap(replacements: Map<String, String>): String {
     return Regex("<(\\w+)>").replace(this) { matchResult ->

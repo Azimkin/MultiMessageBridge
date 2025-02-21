@@ -11,17 +11,9 @@ import com.pengrad.telegrambot.response.SendResponse
 import top.azimkin.multiMessageBridge.MultiMessageBridge
 import top.azimkin.multiMessageBridge.api.events.AsyncTelegramOnUpdateEvent
 import top.azimkin.multiMessageBridge.configuration.TelegramReceiverConfig
-import top.azimkin.multiMessageBridge.data.AdvancementContext
-import top.azimkin.multiMessageBridge.data.MessageContext
-import top.azimkin.multiMessageBridge.data.PlayerLifeContext
-import top.azimkin.multiMessageBridge.data.ServerSessionContext
-import top.azimkin.multiMessageBridge.data.SessionContext
+import top.azimkin.multiMessageBridge.data.*
 import top.azimkin.multiMessageBridge.platforms.dispatchers.MessageDispatcher
-import top.azimkin.multiMessageBridge.platforms.handlers.AdvancementHandler
-import top.azimkin.multiMessageBridge.platforms.handlers.MessageHandler
-import top.azimkin.multiMessageBridge.platforms.handlers.PlayerLifeHandler
-import top.azimkin.multiMessageBridge.platforms.handlers.ServerSessionHandler
-import top.azimkin.multiMessageBridge.platforms.handlers.SessionHandler
+import top.azimkin.multiMessageBridge.platforms.handlers.*
 import top.azimkin.multiMessageBridge.utilities.formatByMap
 import java.io.IOException
 

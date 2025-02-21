@@ -4,7 +4,6 @@ import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
 import org.bukkit.command.TabCompleter
-import top.azimkin.multiMessageBridge.MessagingEventManager
 import top.azimkin.multiMessageBridge.MultiMessageBridge
 import java.util.concurrent.CompletableFuture
 import java.util.logging.Level
@@ -22,7 +21,7 @@ object MainCommand : CommandExecutor, TabCompleter {
             CompletableFuture.runAsync {
                 try {
                     MultiMessageBridge.inst.reload()
-                    MessagingEventManager.get().reloadAll()
+                    MultiMessageBridge.inst.messagingEventManager.reloadAll()
                     isSuccess = true
                 } catch (e: Exception) {
                     isSuccess = false

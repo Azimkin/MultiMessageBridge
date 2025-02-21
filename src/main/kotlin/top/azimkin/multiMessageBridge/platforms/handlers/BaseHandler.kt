@@ -1,3 +1,7 @@
 package top.azimkin.multiMessageBridge.platforms.handlers
 
-interface BaseHandler
+import top.azimkin.multiMessageBridge.data.BaseContext
+
+interface BaseHandler {
+    fun handle(context: BaseContext)
+}

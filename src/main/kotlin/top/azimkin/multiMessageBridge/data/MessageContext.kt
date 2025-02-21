@@ -14,4 +14,4 @@ data class MessageContext(
     val attachedFiles: List<File> = listOf(),
     val urlAttachments: List<String> = listOf(),
     var roleColor: Color? = null
-)
+) : BaseContext

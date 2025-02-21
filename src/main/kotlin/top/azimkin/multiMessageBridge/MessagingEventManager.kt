@@ -1,19 +1,8 @@
 package top.azimkin.multiMessageBridge
 
-import top.azimkin.multiMessageBridge.data.AdvancementContext
-import top.azimkin.multiMessageBridge.data.ConsoleMessageContext
-import top.azimkin.multiMessageBridge.data.MessageContext
-import top.azimkin.multiMessageBridge.data.PlayerLifeContext
-import top.azimkin.multiMessageBridge.data.ServerInfoContext
-import top.azimkin.multiMessageBridge.data.ServerSessionContext
-import top.azimkin.multiMessageBridge.data.SessionContext
+import top.azimkin.multiMessageBridge.data.*
 import top.azimkin.multiMessageBridge.platforms.BaseReceiver
-import top.azimkin.multiMessageBridge.platforms.dispatchers.AdvancementDispatcher
-import top.azimkin.multiMessageBridge.platforms.dispatchers.ConsoleMessageDispatcher
-import top.azimkin.multiMessageBridge.platforms.dispatchers.MessageDispatcher
-import top.azimkin.multiMessageBridge.platforms.dispatchers.PlayerLifeDispatcher
-import top.azimkin.multiMessageBridge.platforms.dispatchers.ServerSessionDispatcher
-import top.azimkin.multiMessageBridge.platforms.dispatchers.SessionDispatcher
+import top.azimkin.multiMessageBridge.platforms.dispatchers.*
 
 interface MessagingEventManager {
     val receivers: List<BaseReceiver>
@@ -34,12 +23,11 @@ interface MessagingEventManager {
 
     fun register(vararg managers: BaseReceiver)
 
+    fun enable(name: String)
+
+    fun enableAll()
+
     fun reloadAll()
 
     fun reload(name: String)
-
-    companion object {
-        @JvmStatic
-        fun get(): MessagingEventManager = MessagingEventManagerImpl.instance
-    }
 }

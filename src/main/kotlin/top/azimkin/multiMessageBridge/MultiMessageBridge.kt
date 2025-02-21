@@ -33,16 +33,12 @@ class MultiMessageBridge : JavaPlugin() {
         inst = this
     }
 
-    var enabledIn = System.currentTimeMillis()
-        private set
-    lateinit var headProvider: SkinHeadProvider
-        private set
-    lateinit var metadataProvider: PlayerMetadataProvider
-        private set
-    lateinit var pluginConfig: MMBConfiguration
-        private set
-    val uptime: Long
-        get() = System.currentTimeMillis() - enabledIn
+    var messagingEventManager: MessagingEventManager = MessagingEventManagerImpl(); private set
+    var enabledIn = System.currentTimeMillis(); private set
+    lateinit var headProvider: SkinHeadProvider private set
+    lateinit var metadataProvider: PlayerMetadataProvider private set
+    lateinit var pluginConfig: MMBConfiguration private set
+    val uptime: Long get() = System.currentTimeMillis() - enabledIn
     val dateFormatter = DateFormatter { pluginConfig.timeFormat }
 
     override fun onEnable() {
@@ -57,9 +53,9 @@ class MultiMessageBridge : JavaPlugin() {
 
         reload()
 
-        ReceiverRegistrationEvent(MessagingEventManager.get()).callEvent()
+        ReceiverRegistrationEvent(messagingEventManager).callEvent()
         logger.info("RegisteredReceivers: ")
-        for ((i, j) in MessagingEventManager.get().receivers.withIndex()) {
+        for ((i, j) in messagingEventManager.receivers.withIndex()) {
             logger.info("${i + 1}. ${j.name}")
         }
         Bukkit.getScheduler().runTaskTimerAsynchronously(
@@ -72,7 +68,7 @@ class MultiMessageBridge : JavaPlugin() {
     }
 
     override fun onDisable() {
-        MessagingEventManager.get().receivers.forEach { it.onDisable() }
+        messagingEventManager.receivers.forEach { it.onDisable() }
     }
 
     fun reload() {
@@ -103,16 +99,16 @@ class MultiMessageBridge : JavaPlugin() {
     }
 
     fun updateServerInfo() {
-        MessagingEventManager.get().dispatch(ServerInfoContext(pluginConfig.defaultServerInfoFormat))
+        messagingEventManager.dispatch(ServerInfoContext(pluginConfig.defaultServerInfoFormat))
     }
 
     override fun reloadConfig() {
         pluginConfig = ConfigManager.create(MMBConfiguration::class.java) {
-            it.withConfigurer(YamlBukkitConfigurer());
-            it.withBindFile(File(dataFolder, "config.yml"));
-            it.withRemoveOrphans(true);
-            it.saveDefaults();
-            it.load(true);
+            it.withConfigurer(YamlBukkitConfigurer())
+            it.withBindFile(File(dataFolder, "config.yml"))
+            it.withRemoveOrphans(true)
+            it.saveDefaults()
+            it.load(true)
         }
     }
 }

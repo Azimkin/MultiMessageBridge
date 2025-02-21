@@ -23,11 +23,11 @@ open class ConfigurableReceiver<T : OkaeriConfig>(
     }
 
     protected fun defaultInitializer(it: OkaeriConfig) {
-        it.withConfigurer(YamlBukkitConfigurer());
-        it.withBindFile(configFile);
-        it.withRemoveOrphans(true);
-        it.saveDefaults();
-        it.load(updateFile);
+        it.withConfigurer(YamlBukkitConfigurer())
+        it.withBindFile(configFile)
+        it.withRemoveOrphans(true)
+        it.saveDefaults()
+        it.load(updateFile)
     }
 
     fun reloadConfig() {

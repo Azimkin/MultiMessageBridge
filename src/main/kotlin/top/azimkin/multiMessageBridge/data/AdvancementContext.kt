@@ -7,4 +7,4 @@ data class AdvancementContext(
     val advancementName: String,
     val description: String,
     val rarity: AdvancementDisplay.Frame,
-)
+) : BaseContext

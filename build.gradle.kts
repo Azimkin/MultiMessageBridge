@@ -1,22 +1,27 @@
+import java.util.Properties
+import kotlin.apply
+
 plugins {
     kotlin("jvm") version "2.0.20"
     //kotlin("plugin.serialization") version "2.0.20"
     id("com.github.johnrengelman.shadow") version "8.1.1"
     id("xyz.jpenilla.run-paper") version "2.3.1"
+    id("maven-publish")
 }
 
 group = "top.azimkin"
 version = "0.3"
 
 fun getVersionWithBuildNumber(): String {
-    val buildFile = File("buildnumber.txt")
+    val buildFile = File("buildnumber.properties")
     if (!buildFile.exists()) {
         buildFile.createNewFile()
-        buildFile.writeText("1")
     }
+    val properties = Properties().apply { load(buildFile.inputStream()) }
     val buildNumber = kotlin.run {
-        val i = buildFile.readText().toInt()
-        buildFile.writeText((i + 1).toString())
+        var i = properties.getProperty(project.version.toString())?.toInt() ?: 0
+        properties.setProperty(project.version.toString(), (++i).toString())
+        buildFile.outputStream().use { properties.store(it, "Generated") }
         i
     }
     val currentVersion = version
@@ -88,18 +93,51 @@ tasks {
         exclude("org/slf4j/**")
         exclude("javax/**")
         exclude("com/google/gson/**")
-        //exclude("com/fasterxml/**")
-        //relocate("com.fasterxml", "top.azimkin.relocate.com.fasterxml")
-        //relocate("com.yaml", "top.azimkin.relocate.com.yaml")
-
-    }
-
-    register("buildProd") {
-        version = getVersionWithBuildNumber()
-        dependsOn("shadowJar")
     }
 
     test {
         useJUnitPlatform()
+    }
+
+    register("javadocJar", Jar::class.java) {
+        from(javadoc)
+        archiveClassifier.set("javadoc")
+    }
+
+    register("sourcesJar", Jar::class.java) {
+        from(sourceSets.main.get().allSource)
+        archiveClassifier.set("sources")
+    }
+
+    register("publishRelease") {
+        dependsOn("publish")
+    }
+}
+
+publishing {
+    repositories {
+        maven {
+            if (gradle.startParameter.taskNames.contains("publishRelease")) {
+                name = "azimkinRepoReleases"
+                url = uri("https://repo.azimkin.top/releases")
+            } else {
+                name = "azimkinRepoSnapshots"
+                url = uri("https://repo.azimkin.top/snapshots")
+            }
+            credentials(PasswordCredentials::class)
+            authentication {
+                create<BasicAuthentication>("basic")
+            }
+        }
+    }
+    publications {
+        create<MavenPublication>("maven") {
+            groupId = project.group.toString()
+            artifactId = "MultiMessageBridge"
+            version = if (gradle.startParameter.taskNames.contains("publishRelease")) project.version.toString() else getVersionWithBuildNumber()
+            from(components["java"])
+            artifact(tasks.kotlinSourcesJar)
+            artifact(tasks["javadocJar"])
+        }
     }
 }

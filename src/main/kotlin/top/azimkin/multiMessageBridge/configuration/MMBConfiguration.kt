@@ -56,9 +56,21 @@ data class MessageList(
     @Comment("        configuration: # type specific configuration can be just {} (empty section)")
     var customFormats: Map<String, MessageConfiguration> = emptyMap(),
     var death: MessageConfiguration = MessageConfiguration("<death_message>", customMessageType, customProperties),
-    var join: MessageConfiguration = MessageConfiguration("<nickname> has joined the game!", customMessageType, customProperties),
-    var leave: MessageConfiguration = MessageConfiguration("<nickname> has left the game!", customMessageType, customProperties),
-    var firstJoin: MessageConfiguration = MessageConfiguration("<nickname> has joined the game for first time!", customMessageType, customProperties),
+    var join: MessageConfiguration = MessageConfiguration(
+        "<nickname> has joined the game!",
+        customMessageType,
+        customProperties
+    ),
+    var leave: MessageConfiguration = MessageConfiguration(
+        "<nickname> has left the game!",
+        customMessageType,
+        customProperties
+    ),
+    var firstJoin: MessageConfiguration = MessageConfiguration(
+        "<nickname> has joined the game for first time!",
+        customMessageType,
+        customProperties
+    ),
     var serverEnabled: MessageConfiguration = MessageConfiguration("Server enabled!"),
     var serverDisabled: MessageConfiguration = MessageConfiguration("Server disabled!"),
     @Comment("Possible replacements: ")

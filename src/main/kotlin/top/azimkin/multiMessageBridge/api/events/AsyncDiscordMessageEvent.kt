@@ -6,7 +6,11 @@ import org.bukkit.event.Event
 import org.bukkit.event.HandlerList
 import top.azimkin.multiMessageBridge.platforms.discord.DiscordReceiver
 
-class AsyncDiscordMessageEvent(val event: MessageReceivedEvent, val receiver: DiscordReceiver, var mustBeCanceledIfBot: Boolean = true) : Event(true),
+class AsyncDiscordMessageEvent(
+    val event: MessageReceivedEvent,
+    val receiver: DiscordReceiver,
+    var mustBeCanceledIfBot: Boolean = true
+) : Event(true),
     Cancellable {
     private var cancelled: Boolean = false
     override fun getHandlers(): HandlerList = handlerList
