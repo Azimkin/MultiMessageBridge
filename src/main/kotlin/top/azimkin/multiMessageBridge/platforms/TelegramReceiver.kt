@@ -8,6 +8,7 @@ import com.pengrad.telegrambot.model.Update
 import com.pengrad.telegrambot.request.GetFile
 import com.pengrad.telegrambot.request.SendMessage
 import com.pengrad.telegrambot.response.SendResponse
+import top.azimkin.multiMessageBridge.MessagingEventManager
 import top.azimkin.multiMessageBridge.MultiMessageBridge
 import top.azimkin.multiMessageBridge.api.events.AsyncTelegramOnUpdateEvent
 import top.azimkin.multiMessageBridge.configuration.TelegramReceiverConfig
@@ -16,23 +17,32 @@ import top.azimkin.multiMessageBridge.platforms.dispatchers.MessageDispatcher
 import top.azimkin.multiMessageBridge.platforms.handlers.*
 import top.azimkin.multiMessageBridge.utilities.formatByMap
 import java.io.IOException
+import java.util.regex.Pattern
 
-class TelegramReceiver : ConfigurableReceiver<TelegramReceiverConfig>("Telegram", TelegramReceiverConfig::class.java),
+class TelegramReceiver(val em: MessagingEventManager) : ConfigurableReceiver<TelegramReceiverConfig>("Telegram", TelegramReceiverConfig::class.java),
     MessageHandler, AdvancementHandler,
     MessageDispatcher, PlayerLifeHandler, SessionHandler, ServerSessionHandler {
     val token = config.bot.token
     var updateErrorsInPeriod: Int = 0
-    val bot = TelegramBot(token).also {
-        it.setUpdatesListener({ updates ->
-            for (update in updates) {
-                processUpdate(update)
+    val bot: TelegramBot
+
+    init {
+        if (TOKEN_PATTERN.matcher(token).matches()) bot = TelegramBot(token).also {
+            it.setUpdatesListener({ updates ->
+                for (update in updates) {
+                    processUpdate(update)
+                }
+                updateErrorsInPeriod = 0
+                return@setUpdatesListener UpdatesListener.CONFIRMED_UPDATES_ALL
+            }) { e ->
+                updateErrorsInPeriod++
+                if (updateErrorsInPeriod % 10 == 0)
+                    MultiMessageBridge.inst.logger.warning("Unable to get updates from telegram API!\nErrors in period: $updateErrorsInPeriod")
             }
-            updateErrorsInPeriod = 0
-            return@setUpdatesListener UpdatesListener.CONFIRMED_UPDATES_ALL
-        }) { e ->
-            updateErrorsInPeriod++
-            if (updateErrorsInPeriod % 10 == 0)
-                MultiMessageBridge.inst.logger.warning("Unable to get updates from telegram API!\nErrors in period: $updateErrorsInPeriod")
+        } else {
+            logger.warn("Invalid telegram token provided!")
+            throw RuntimeException("Invalid telegram token provided!")
+            em.disable(name)
         }
     }
 
@@ -194,5 +204,6 @@ class TelegramReceiver : ConfigurableReceiver<TelegramReceiverConfig>("Telegram"
 
     companion object {
         private const val MAX_FILE_SIZE = 25_000_000
+        private val TOKEN_PATTERN = Pattern.compile("""^\d{9,10}:[A-Za-z0-9_-]{35}$""")
     }
 }

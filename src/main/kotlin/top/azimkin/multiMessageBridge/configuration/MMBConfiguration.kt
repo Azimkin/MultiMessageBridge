@@ -18,8 +18,8 @@ data class MMBConfiguration(
     var metrics: Boolean = true,
     @Comment("This part describes anything about heads?")
     var heads: HeadsConfiguration = HeadsConfiguration(),
-    @Comment("Default message receivers that must be enabled")
-    var enabledDefaultReceivers: Set<String> = setOf("Minecraft", "Discord", "Telegram"),
+    @Comment("Message receivers that must be enabled")
+    var enabledReceivers: List<String> = listOf("Minecraft", "Discord", "Telegram"),
     @Comment("Time format used in server info under discord text channel")
     var timeFormat: String = "{d} days {h} hours {m} minutes",
     @Comment("time to update server info in seconds (10min its discord limit)")

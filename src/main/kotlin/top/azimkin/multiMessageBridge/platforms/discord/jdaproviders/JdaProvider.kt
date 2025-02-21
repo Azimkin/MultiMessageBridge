@@ -8,4 +8,6 @@ interface JdaProvider {
     fun isInitialized(): Boolean
 
     fun addInitializeListener(listener: (JDA) -> Unit)
+
+    fun shutdown()
 }

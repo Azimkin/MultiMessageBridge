@@ -1,9 +1,11 @@
 package top.azimkin.multiMessageBridge.platforms.discord.jdaproviders
 
-class JdaProviderManager {
-    val providers: HashMap<String, Class<*>> = HashMap()
+import top.azimkin.multiMessageBridge.platforms.discord.DiscordReceiver
 
-    fun add(name: String, clazz: Class<*>) {
-        providers[name] = clazz
+class JdaProviderManager {
+    val providers: HashMap<String, (String, DiscordReceiver) -> JdaProvider> = HashMap()
+
+    fun add(name: String, initFunction: (String, DiscordReceiver) -> JdaProvider) {
+        providers[name] = initFunction
     }
 }

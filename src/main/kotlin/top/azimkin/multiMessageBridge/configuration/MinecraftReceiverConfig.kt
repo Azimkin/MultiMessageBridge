@@ -6,7 +6,6 @@ import io.papermc.paper.advancement.AdvancementDisplay
 
 // simplified
 data class MinecraftReceiverConfig(
-    //TODO: add boolean switches for any dispatcher
     @Comment("If enabled will filter advancements by rarity")
     var filterAdvancements: Boolean = false,
     private var enabledAdvancementRarity: List<String> = AdvancementDisplay.Frame.entries.map { it.name },

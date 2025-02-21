@@ -9,27 +9,17 @@ import top.azimkin.multiMessageBridge.platforms.dispatchers.*
 import top.azimkin.multiMessageBridge.platforms.handlers.*
 import java.util.*
 import java.util.concurrent.CompletableFuture.runAsync
+import kotlin.reflect.javaType
+import kotlin.reflect.typeOf
 
 class MessagingEventManagerImpl : MessagingEventManager {
-    private val logger = LoggerFactory.getLogger(this.javaClass)
-    private val messageDispatchers: MutableList<MessageDispatcher> = LinkedList()
-    private val sessionDispatchers: MutableList<SessionDispatcher> = LinkedList()
-    private val serverSessionDispatchers: MutableList<ServerSessionDispatcher> = LinkedList()
-    private val playerLifeDispatchers: MutableList<PlayerLifeDispatcher> = LinkedList()
-    private val consoleDispatchers: MutableList<ConsoleMessageDispatcher> = LinkedList()
-    private val advancementDispatchers: MutableList<AdvancementDispatcher> = LinkedList()
+    private val logger = LoggerFactory.getLogger("MessagingEventManagerImpl")
 
-    private val messageHandlers: MutableList<MessageHandler> = LinkedList()
-    private val sessionHandlers: MutableList<SessionHandler> = LinkedList()
-    private val serverSessionHandlers: MutableList<ServerSessionHandler> = LinkedList()
-    private val playerLifeHandlers: MutableList<PlayerLifeHandler> = LinkedList()
-    private val serverInfoHandlers: MutableList<ServerInfoHandler> = LinkedList()
-
-    private val advancementHandlers: MutableList<AdvancementHandler> = LinkedList()
-
-    private val baseReceivers: MutableList<BaseReceiver> = LinkedList()
+    private val baseReceivers = HashMap<String, BaseReceiver>()
     override val receivers: List<BaseReceiver>
-        get() = baseReceivers
+        get() = baseReceivers.values.toList()
+
+    private val registeredReceivers = HashMap<String, () -> BaseReceiver>()
 
     override fun dispatch(
         dispatcher: MessageDispatcher,
@@ -38,8 +28,7 @@ class MessagingEventManagerImpl : MessagingEventManager {
         val event = AsyncChatMessageDispatchedEvent(context)
         val res = event.callEvent()
         if (!res) return@runAsync
-        for (handler in messageHandlers) {
-            if (handler == dispatcher) continue
+        eachTyped<MessageHandler>(dispatcher) { handler ->
             try {
                 val receiver = handler as? BaseReceiver
                     ?: receivers.find { it == handler }
@@ -52,12 +41,19 @@ class MessagingEventManagerImpl : MessagingEventManager {
         }
     }.let { }
 
+    @OptIn(ExperimentalStdlibApi::class)
+    private inline fun <reified T> eachTyped(filter: Any, action: (T) -> Unit) {
+        for (smth in baseReceivers.values) {
+            if (smth == filter || smth !is T) continue
+            action.invoke(smth)
+        }
+    }
+
     override fun dispatch(
         dispatcher: SessionDispatcher,
         context: SessionContext
     ) = runAsync {
-        for (handler in sessionHandlers) {
-            if (handler == dispatcher) continue
+        eachTyped<SessionHandler>(dispatcher) { handler ->
             try {
                 handler.handle(context)
             } catch (e: Exception) {
@@ -71,8 +67,7 @@ class MessagingEventManagerImpl : MessagingEventManager {
         dispatcher: ServerSessionDispatcher,
         context: ServerSessionContext
     ) = runAsync {
-        for (handler in serverSessionHandlers) {
-            if (handler == dispatcher) continue
+        eachTyped<ServerSessionHandler>(dispatcher) { handler ->
             try {
                 handler.handle(context)
             } catch (e: Exception) {
@@ -86,8 +81,7 @@ class MessagingEventManagerImpl : MessagingEventManager {
         dispatcher: PlayerLifeDispatcher,
         context: PlayerLifeContext
     ) = runAsync {
-        for (handler in playerLifeHandlers) {
-            if (handler == dispatcher) continue
+        eachTyped<PlayerLifeHandler>(dispatcher) { handler ->
             try {
                 handler.handle(context)
             } catch (e: Exception) {
@@ -110,8 +104,7 @@ class MessagingEventManagerImpl : MessagingEventManager {
         dispatcher: AdvancementDispatcher,
         context: AdvancementContext
     ) = runAsync {
-        for (handler in advancementHandlers) {
-            if (handler == dispatcher) continue
+        eachTyped<AdvancementHandler>(dispatcher) { handler ->
             try {
                 handler.handle(context)
             } catch (e: Exception) {
@@ -122,63 +115,46 @@ class MessagingEventManagerImpl : MessagingEventManager {
     }.let { }
 
     override fun dispatch(context: ServerInfoContext) {
-        for (handler in serverInfoHandlers) {
+        eachTyped<ServerInfoHandler>(0) { handler ->
             handler.handle(context)
         }
     }
 
     override fun enable(name: String) {
+        try {
+            val manager = registeredReceivers[name]?.invoke() ?: run {
+                logger.warn("Unknown receiver $name")
+                return
+            }
+            baseReceivers.put(name, manager)
+            logger.info("${manager.name} enabled")
+        } catch (e: Throwable) {
+            logger.error("Unable to enable receiver $name", e)
+        }
+    }
+
+    override fun enable(enabled: List<String>) {
+        if (enabled.isEmpty()) enableAll()
+        else if (enabled[0] == "DISABLED") {
+            logger.info("Plugin disabled fr")
+            return
+        }
+        logger.info("RegisteredReceivers: ")
+        var c = 1;
+        for ((i, _) in registeredReceivers) {
+            logger.info("${c++}. $i")
+        }
+        for (i in enabled) {
+            enable(i)
+        }
     }
 
     override fun enableAll() {
+        enable(registeredReceivers.keys.toList())
     }
 
-    override fun register(vararg managers: BaseReceiver) {
-        for (manager in managers) {
-            try {
-                baseReceivers.add(manager)
-                if (manager is MessageHandler) {
-                    messageHandlers.add(manager)
-                }
-                if (manager is PlayerLifeHandler) {
-                    playerLifeHandlers.add(manager)
-                }
-                if (manager is ServerSessionHandler) {
-                    serverSessionHandlers.add(manager)
-                }
-                if (manager is SessionHandler) {
-                    sessionHandlers.add(manager)
-                }
-                if (manager is ServerInfoHandler) {
-                    serverInfoHandlers.add(manager)
-                }
-                if (manager is AdvancementHandler) {
-                    advancementHandlers.add(manager)
-                }
-
-                if (manager is MessageDispatcher) {
-                    messageDispatchers.add(manager)
-                }
-                if (manager is PlayerLifeDispatcher) {
-                    playerLifeDispatchers.add(manager)
-                }
-                if (manager is ServerSessionDispatcher) {
-                    serverSessionDispatchers.add(manager)
-                }
-                if (manager is SessionDispatcher) {
-                    sessionDispatchers.add(manager)
-                }
-                if (manager is ConsoleMessageDispatcher) {
-                    consoleDispatchers.add(manager)
-                }
-                if (manager is AdvancementDispatcher) {
-                    advancementDispatchers.add(manager)
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-
-        }
+    override fun register(vararg receivers: Pair<String, () -> BaseReceiver>) {
+        registeredReceivers.putAll(receivers)
     }
 
     override fun reloadAll() {
@@ -187,5 +163,11 @@ class MessagingEventManagerImpl : MessagingEventManager {
 
     override fun reload(name: String) {
         receivers.forEach { if (it.name == name) it.reload() }
+    }
+
+    override fun disable(name: String) {
+        val receiver = baseReceivers[name] ?: return
+        receiver.onDisable()
+        baseReceivers.remove(name)
     }
 }

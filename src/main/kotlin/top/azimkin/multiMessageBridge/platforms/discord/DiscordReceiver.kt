@@ -4,6 +4,7 @@ import me.scarsz.jdaappender.ChannelLoggingHandler
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent
+import top.azimkin.multiMessageBridge.MessagingEventManager
 import top.azimkin.multiMessageBridge.MultiMessageBridge
 import top.azimkin.multiMessageBridge.api.events.AsyncDiscordMessageEvent
 import top.azimkin.multiMessageBridge.api.events.JdaProviderRegistrationEvent
@@ -22,20 +23,26 @@ import top.azimkin.multiMessageBridge.utilities.formatByMap
 import top.azimkin.multiMessageBridge.utilities.parseColor
 import java.awt.Color
 
-class DiscordReceiver : ConfigurableReceiver<DiscordReceiverConfig>("Discord", DiscordReceiverConfig::class.java),
+class DiscordReceiver(val em: MessagingEventManager) :
+    ConfigurableReceiver<DiscordReceiverConfig>("Discord", DiscordReceiverConfig::class.java),
     MessageHandler, MessageDispatcher, PlayerLifeHandler, SessionHandler, ServerSessionHandler,
     ConsoleMessageDispatcher, ServerInfoHandler, AdvancementHandler {
     private val executeQueue = ArrayDeque<() -> Unit>()
     private lateinit var console: ChannelLoggingHandler
 
-    var jda: JdaProvider = createJdaProvider().apply {
-        MultiMessageBridge.inst.logger.info("Using ${this.javaClass.name.split('.').last()} as jdaProvider")
+    val jda: JdaProvider = createJdaProvider().apply {
+        logger.info("Using ${this.javaClass.simpleName} as jdaProvider")
         addInitializeListener(this@DiscordReceiver::attachConsole)
         addInitializeListener {
             while (executeQueue.isNotEmpty()) {
                 executeQueue.removeFirst()()
             }
         }
+    }
+
+    override fun onDisable() {
+        jda.shutdown()
+        super.onDisable()
     }
 
     override fun handle(context: MessageContext) {
@@ -178,7 +185,7 @@ class DiscordReceiver : ConfigurableReceiver<DiscordReceiverConfig>("Discord", D
     private fun createJdaProvider(): JdaProvider {
         val token = config.bot.token
         val manager = JdaProviderManager().apply {
-            add("default", CommonJdaProvider::class.java)
+            add("default") { token, receiver -> CommonJdaProvider(token, receiver) }
         }
         JdaProviderRegistrationEvent(manager).callEvent()
 
@@ -190,37 +197,9 @@ class DiscordReceiver : ConfigurableReceiver<DiscordReceiverConfig>("Discord", D
         if (manager.providers.isEmpty()) {
             return useCommon("No available JDA providers found!")
         }
-
         val providerName = config.advanced.jdaProvider
-        val providerClass = manager.providers[providerName] ?: return useCommon("Unknown provider $providerName")
 
-        if (!JdaProvider::class.java.isAssignableFrom(providerClass)) {
-            return useCommon("$providerName must implement JdaProvider interface!")
-        }
-
-        return try {
-            val constructors = providerClass.declaredConstructors
-            val matchingConstructor = constructors.find { constructor ->
-                val params = constructor.parameterTypes
-                when (params.size) {
-                    0 -> true
-                    1 -> params[0] == String::class.java
-                    2 -> params[0] == String::class.java && params[1] == DiscordReceiver::class.java
-                    else -> false
-                }
-            } ?: throw IllegalArgumentException("No suitable constructor found for $providerName")
-
-            val instance = when (matchingConstructor.parameterCount) {
-                0 -> matchingConstructor.newInstance()
-                1 -> matchingConstructor.newInstance(token)
-                2 -> matchingConstructor.newInstance(token, this)
-                else -> throw IllegalStateException("Unexpected constructor parameter count")
-            }
-            instance as JdaProvider
-        } catch (e: Throwable) {
-            e.printStackTrace()
-            useCommon("$providerName encountered an exception during instantiation!")
-        }
+        return manager.providers[providerName]?.invoke(token, this) ?: useCommon("Unknown provider $providerName")
     }
 
     private fun attachConsole(jda: JDA) {

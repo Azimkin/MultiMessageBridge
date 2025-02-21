@@ -26,10 +26,11 @@ object CommonListener : Listener {
 
     @EventHandler
     fun onReceiverRegistration(event: ReceiverRegistrationEvent) {
-        val enabled = MultiMessageBridge.inst.pluginConfig.enabledDefaultReceivers
-        if ("Minecraft" in enabled) event.eventManager.register(MinecraftReceiver(MultiMessageBridge.inst))
-        if ("Discord" in enabled) event.eventManager.register(TelegramReceiver())
-        if ("Telegram" in enabled) event.eventManager.register(DiscordReceiver())
+        event.eventManager.register(
+            "Minecraft" to { MinecraftReceiver(MultiMessageBridge.inst) },
+            "Discord" to { DiscordReceiver(event.eventManager) },
+            "Telegram" to { TelegramReceiver(event.eventManager) },
+        )
     }
 
     @EventHandler

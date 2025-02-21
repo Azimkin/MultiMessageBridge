@@ -21,13 +21,17 @@ interface MessagingEventManager {
 
     fun dispatch(context: ServerInfoContext)
 
-    fun register(vararg managers: BaseReceiver)
+    fun register(vararg receivers: Pair<String, () -> BaseReceiver>)
 
     fun enable(name: String)
+
+    fun enable(enabled: List<String>)
 
     fun enableAll()
 
     fun reloadAll()
 
     fun reload(name: String)
+
+    fun disable(name: String)
 }

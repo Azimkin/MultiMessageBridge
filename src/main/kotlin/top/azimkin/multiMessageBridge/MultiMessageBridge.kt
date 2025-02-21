@@ -54,10 +54,8 @@ class MultiMessageBridge : JavaPlugin() {
         reload()
 
         ReceiverRegistrationEvent(messagingEventManager).callEvent()
-        logger.info("RegisteredReceivers: ")
-        for ((i, j) in messagingEventManager.receivers.withIndex()) {
-            logger.info("${i + 1}. ${j.name}")
-        }
+        messagingEventManager.enable(pluginConfig.enabledReceivers)
+
         Bukkit.getScheduler().runTaskTimerAsynchronously(
             this,
             this::updateServerInfo,
