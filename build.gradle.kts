@@ -61,6 +61,7 @@ dependencies {
     implementation("me.scarsz.jdaappender:jda5:1.2.3") {
         exclude(group = "net.dv8tion", module = "JDA")
     }
+    implementation("com.discord4j:discord4j-core:3.2.7")
 
     // tests
     testImplementation(kotlin("test"))
