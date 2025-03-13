@@ -1,4 +1,4 @@
-package top.azimkin.multiMessageBridge.skins
+package top.azimkin.multiMessageBridge.providers.skins
 
 import me.clip.placeholderapi.PlaceholderAPI
 import org.bukkit.Bukkit

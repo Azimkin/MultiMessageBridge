@@ -16,9 +16,9 @@ import top.azimkin.multiMessageBridge.metadata.LuckPermsMetadataProvider
 import top.azimkin.multiMessageBridge.metadata.NoMetadataProvider
 import top.azimkin.multiMessageBridge.metadata.PlayerMetadataProvider
 import top.azimkin.multiMessageBridge.metadata.VaultMetadataProvider
-import top.azimkin.multiMessageBridge.skins.HeadProviderManager
-import top.azimkin.multiMessageBridge.skins.LinkHeadProvider
-import top.azimkin.multiMessageBridge.skins.SkinHeadProvider
+import top.azimkin.multiMessageBridge.providers.skins.HeadProviderManager
+import top.azimkin.multiMessageBridge.providers.skins.LinkHeadProvider
+import top.azimkin.multiMessageBridge.providers.skins.SkinHeadProvider
 import top.azimkin.multiMessageBridge.utilities.DateFormatter
 import top.azimkin.multiMessageBridge.utilities.Translator
 import top.azimkin.multiMessageBridge.utilities.runBukkitAsync

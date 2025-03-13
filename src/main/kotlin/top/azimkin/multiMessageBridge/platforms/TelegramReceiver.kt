@@ -46,6 +46,10 @@ class TelegramReceiver(val em: MessagingEventManager) : ConfigurableReceiver<Tel
         }
     }
 
+    override fun onDisable() {
+        bot.shutdown()
+        super.onDisable()
+    }
 
     override fun handle(context: MessageContext) {
         sendMessage(parseFormat(context))
@@ -172,11 +176,12 @@ class TelegramReceiver(val em: MessagingEventManager) : ConfigurableReceiver<Tel
         }
         if (update.message()?.chat()?.id() == config.bot.mainChat) {
             if (config.bot.mainThread < 0 || (update.message()?.messageThreadId() == config.bot.mainThread)) {
-                val link = getPhotoLink(update) ?: getVideoLink(update)
-                if (update.message()?.text() == null && link == null) return
+                //val link = getPhotoLink(update) ?: getVideoLink(update)
+                //if (update.message()?.text() == null && link == null) return
+                if (update.message()?.text() == null) return
                 dispatch(
                     MessageContext(
-                        update.message().from().username(),
+                        update.message().from().username() ?: update.message().from().firstName() ?: "Anonymous",
                         update.message().text() ?: "",
                         update.message().replyToMessage() != null,
                         name,

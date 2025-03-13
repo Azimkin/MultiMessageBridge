@@ -8,9 +8,9 @@ data class MessageContext(
     var message: String,
     val isReply: Boolean,
     val platform: String,
-    var reply: String?,
-    var replyUser: String?,
-    var role: String?,
+    var reply: String? = null,
+    var replyUser: String? = null,
+    var role: String? = null,
     val attachedFiles: List<File> = listOf(),
     val urlAttachments: List<String> = listOf(),
     var roleColor: Color? = null

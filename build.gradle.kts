@@ -1,5 +1,4 @@
-import java.util.Properties
-import kotlin.apply
+import java.util.*
 
 plugins {
     kotlin("jvm") version "1.9.10"
@@ -10,7 +9,7 @@ plugins {
 }
 
 group = "top.azimkin"
-version = "0.3"
+version = "0.4"
 
 fun getVersionWithBuildNumber(): String {
     val buildFile = File("buildnumber.properties")
@@ -54,12 +53,13 @@ dependencies {
     compileOnly("com.github.MilkBowl:VaultAPI:1.7.1")
     compileOnly("net.luckperms:api:5.4")
     compileOnly("me.clip:placeholderapi:2.11.6")
+    compileOnly(fileTree("./libs") { include("*.jar") })
 
     implementation("net.dv8tion:JDA:5.1.2") {
-        exclude(module="opus-java")
+        exclude(module = "opus-java")
     }
     implementation("me.scarsz.jdaappender:jda5:1.2.3") {
-        exclude(group="net.dv8tion", module = "JDA")
+        exclude(group = "net.dv8tion", module = "JDA")
     }
 
     // tests
@@ -134,7 +134,8 @@ publishing {
         create<MavenPublication>("maven") {
             groupId = project.group.toString()
             artifactId = "MultiMessageBridge"
-            version = if (gradle.startParameter.taskNames.contains("publishRelease")) project.version.toString() else getVersionWithBuildNumber()
+            version =
+                if (gradle.startParameter.taskNames.contains("publishRelease")) project.version.toString() else getVersionWithBuildNumber()
             from(components["java"])
             artifact(tasks.kotlinSourcesJar)
             artifact(tasks["javadocJar"])

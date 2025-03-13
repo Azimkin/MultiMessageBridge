@@ -1,11 +1,9 @@
 package top.azimkin.multiMessageBridge.platforms
 
 import io.papermc.paper.advancement.AdvancementDisplay
-import io.papermc.paper.event.player.AsyncChatEvent
 import net.kyori.adventure.text.Component
 import org.bukkit.Bukkit
 import org.bukkit.event.EventHandler
-import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.entity.PlayerDeathEvent
 import org.bukkit.event.player.PlayerAdvancementDoneEvent
@@ -14,8 +12,11 @@ import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.event.server.ServerLoadEvent
 import org.bukkit.plugin.java.JavaPlugin
 import top.azimkin.multiMessageBridge.MultiMessageBridge
+import top.azimkin.multiMessageBridge.api.events.ChatHandlerRegistrationEvent
 import top.azimkin.multiMessageBridge.configuration.MinecraftReceiverConfig
 import top.azimkin.multiMessageBridge.data.*
+import top.azimkin.multiMessageBridge.handlers.chat.ChatHandler
+import top.azimkin.multiMessageBridge.handlers.chat.NoPluginChatHandler
 import top.azimkin.multiMessageBridge.platforms.dispatchers.*
 import top.azimkin.multiMessageBridge.platforms.handlers.MessageHandler
 import top.azimkin.multiMessageBridge.utilities.*
@@ -25,9 +26,17 @@ class MinecraftReceiver(val plugin: JavaPlugin) :
     ConfigurableReceiver<MinecraftReceiverConfig>("Minecraft", MinecraftReceiverConfig::class.java), Listener,
     MessageHandler, MessageDispatcher, PlayerLifeDispatcher, ServerSessionDispatcher, SessionDispatcher,
     AdvancementDispatcher {
+    private var chatHandler: ChatHandler
 
     init {
         plugin.server.pluginManager.registerEvents(this, plugin)
+        val event = ChatHandlerRegistrationEvent(config.chatHandlerConfiguration, this)
+        event.callEvent()
+        chatHandler = (event.chatHandler ?: run {
+            logger.warn("No chat handler was specified in event, using NoPluginChatHandler!")
+            NoPluginChatHandler(this)
+        }).apply { addListener(this@MinecraftReceiver::dispatch) }
+        logger.info("Using ${chatHandler.javaClass.simpleName} as chat handler!")
     }
 
 
@@ -57,22 +66,6 @@ class MinecraftReceiver(val plugin: JavaPlugin) :
     private fun getMessageOrBase(platform: String): String =
         config.messages.customFormats[platform] ?: config.messages.messageBase
 
-    @EventHandler(priority = EventPriority.HIGHEST)
-    fun onMessage(event: AsyncChatEvent) {
-        if (event.isCancelled) return
-        dispatch(
-            MessageContext(
-                event.player.name,
-                event.message().toPlainText(),
-                false,
-                name,
-                null,
-                null,
-                MultiMessageBridge.inst.metadataProvider.getPrefix(event.player)
-            )
-        )
-    }
-
     @EventHandler
     fun onPlayerDeath(event: PlayerDeathEvent) {
         val plain = event.deathMessage()?.toPlainText() ?: ""
@@ -100,6 +93,7 @@ class MinecraftReceiver(val plugin: JavaPlugin) :
 
     @EventHandler
     fun onAdvancement(event: PlayerAdvancementDoneEvent) {
+        if (!config.dispatchAdvancements) return
         val rarity = event.advancement.display?.frame() ?: AdvancementDisplay.Frame.TASK
         if (config.filterAdvancements && rarity !in config.enabledAdvancementRarity()) return
         dispatch(
