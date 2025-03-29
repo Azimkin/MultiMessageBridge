@@ -139,9 +139,9 @@ class DiscordReceiver(val em: MessagingEventManager) :
     }
 
     fun dispatchMessage(event: MessageReceivedEvent) {
-        val bukkitEvent = AsyncDiscordMessageEvent(event, this)
-        if (!bukkitEvent.callEvent()) return
-        if (event.author.isBot && bukkitEvent.mustBeCanceledIfBot) return
+        //val bukkitEvent = AsyncDiscordMessageEvent(event, this)
+        //if (!bukkitEvent.callEvent()) return
+        //if (event.author.isBot && bukkitEvent.mustBeCanceledIfBot) return
         //MultiMessageBridge.inst.logger.info(event.toString())
         val channelConfig = findChannel(id = event.channel.idLong) ?: return
         when (channelConfig.type) {

@@ -25,9 +25,11 @@ fun Component.toMiniMessage(): String {
 }
 
 fun String.fbm(replacements: Map<String, String>) = formatByMap(replacements)
+
+private val angleBracketsRegex = Regex("<(\\w+)>")
 fun String.formatByMap(replacements: Map<String, String>): String {
-    return Regex("<(\\w+)>").replace(this) { matchResult ->
+    return angleBracketsRegex.replace(this) { matchResult ->
         val key = matchResult.groupValues[1]
-        replacements[key] ?: matchResult.value // Если ключа нет в карте, оставляем исходный тег
+        angleBracketsRegex.replace(replacements[key] ?: matchResult.value) { mr -> replacements[key] ?: mr.value }
     }
 }

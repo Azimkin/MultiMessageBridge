@@ -1,17 +1,20 @@
 package top.azimkin.multiMessageBridge.data
 
+import top.azimkin.multiMessageBridge.platforms.BaseReceiver
 import java.awt.Color
 import java.io.File
 
 data class MessageContext(
-    val senderName: String,
+    var senderName: String,
     var message: String,
-    val isReply: Boolean,
+    var isReply: Boolean,
     val platform: String,
     var reply: String? = null,
     var replyUser: String? = null,
     var role: String? = null,
-    val attachedFiles: List<File> = listOf(),
-    val urlAttachments: List<String> = listOf(),
+    var attachedFiles: List<File> = listOf(),
+    var urlAttachments: List<String> = listOf(),
     var roleColor: Color? = null
 ) : BaseContext
+
+fun messageContext(platform: BaseReceiver, block: MessageContext.() -> Unit): MessageContext = MessageContext("undefined", "undefined", false, platform.name).apply(block)
