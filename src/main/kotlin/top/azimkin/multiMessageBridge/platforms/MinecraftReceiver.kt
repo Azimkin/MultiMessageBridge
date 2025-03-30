@@ -26,7 +26,7 @@ class MinecraftReceiver(val plugin: JavaPlugin) :
     ConfigurableReceiver<MinecraftReceiverConfig>("Minecraft", MinecraftReceiverConfig::class.java), Listener,
     MessageHandler, MessageDispatcher, PlayerLifeDispatcher, ServerSessionDispatcher, SessionDispatcher,
     AdvancementDispatcher {
-    private var chatHandler: ChatHandler
+    var chatHandler: ChatHandler; private set
 
     init {
         plugin.server.pluginManager.registerEvents(this, plugin)
