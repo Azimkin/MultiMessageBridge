@@ -13,6 +13,7 @@ import org.bukkit.event.server.ServerLoadEvent
 import org.bukkit.plugin.java.JavaPlugin
 import top.azimkin.multiMessageBridge.MultiMessageBridge
 import top.azimkin.multiMessageBridge.api.events.ChatHandlerRegistrationEvent
+import top.azimkin.multiMessageBridge.api.events.MinecraftChatMessageReceivedEvent
 import top.azimkin.multiMessageBridge.configuration.MinecraftReceiverConfig
 import top.azimkin.multiMessageBridge.data.*
 import top.azimkin.multiMessageBridge.handlers.chat.ChatHandler
@@ -26,7 +27,7 @@ class MinecraftReceiver(val plugin: JavaPlugin) :
     ConfigurableReceiver<MinecraftReceiverConfig>("Minecraft", MinecraftReceiverConfig::class.java), Listener,
     MessageHandler, MessageDispatcher, PlayerLifeDispatcher, ServerSessionDispatcher, SessionDispatcher,
     AdvancementDispatcher {
-    private var chatHandler: ChatHandler
+    var chatHandler: ChatHandler; private set
 
     init {
         plugin.server.pluginManager.registerEvents(this, plugin)
@@ -35,7 +36,10 @@ class MinecraftReceiver(val plugin: JavaPlugin) :
         chatHandler = (event.chatHandler ?: run {
             logger.warn("No chat handler was specified in event, using NoPluginChatHandler!")
             NoPluginChatHandler(this)
-        }).apply { addListener(this@MinecraftReceiver::dispatch) }
+        }).apply {
+            addListener(this@MinecraftReceiver::dispatch)
+            addListener { ctx -> runSync { MinecraftChatMessageReceivedEvent(ctx, this@MinecraftReceiver) } }
+        }
         logger.info("Using ${chatHandler.javaClass.simpleName} as chat handler!")
     }
 

@@ -42,6 +42,7 @@ class DiscordReceiver(val em: MessagingEventManager) :
 
     override fun onDisable() {
         jda.shutdown()
+        jda.get().awaitShutdown()
         super.onDisable()
     }
 

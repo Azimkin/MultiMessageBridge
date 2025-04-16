@@ -3,6 +3,7 @@ package top.azimkin.multiMessageBridge
 import org.bukkit.Bukkit
 import org.slf4j.LoggerFactory
 import top.azimkin.multiMessageBridge.api.events.AsyncChatMessageDispatchedEvent
+import top.azimkin.multiMessageBridge.api.events.ReceiverEnabledEvent
 import top.azimkin.multiMessageBridge.data.*
 import top.azimkin.multiMessageBridge.platforms.BaseReceiver
 import top.azimkin.multiMessageBridge.platforms.dispatchers.*
@@ -127,6 +128,7 @@ class MessagingEventManagerImpl : MessagingEventManager {
                 return
             }
             baseReceivers.put(name, manager)
+            ReceiverEnabledEvent(manager).callEvent()
             logger.info("${manager.name} enabled")
         } catch (e: Throwable) {
             logger.error("Unable to enable receiver $name", e)
