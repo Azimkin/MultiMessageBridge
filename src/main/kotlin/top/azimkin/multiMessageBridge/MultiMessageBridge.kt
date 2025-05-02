@@ -11,11 +11,13 @@ import top.azimkin.multiMessageBridge.api.events.ReceiverRegistrationEvent
 import top.azimkin.multiMessageBridge.commands.MainCommand
 import top.azimkin.multiMessageBridge.configuration.MMBConfiguration
 import top.azimkin.multiMessageBridge.data.ServerInfoContext
+import top.azimkin.multiMessageBridge.data.ServerSessionContext
 import top.azimkin.multiMessageBridge.listeners.CommonListener
 import top.azimkin.multiMessageBridge.metadata.LuckPermsMetadataProvider
 import top.azimkin.multiMessageBridge.metadata.NoMetadataProvider
 import top.azimkin.multiMessageBridge.metadata.PlayerMetadataProvider
 import top.azimkin.multiMessageBridge.metadata.VaultMetadataProvider
+import top.azimkin.multiMessageBridge.platforms.MinecraftReceiver
 import top.azimkin.multiMessageBridge.providers.skins.HeadProviderManager
 import top.azimkin.multiMessageBridge.providers.skins.LinkHeadProvider
 import top.azimkin.multiMessageBridge.providers.skins.SkinHeadProvider
@@ -66,6 +68,8 @@ class MultiMessageBridge : JavaPlugin() {
     }
 
     override fun onDisable() {
+        val mc = messagingEventManager.receivers.first { it is MinecraftReceiver } as MinecraftReceiver
+        messagingEventManager.dispatch(mc, ServerSessionContext(false))
         messagingEventManager.receivers.forEach { it.onDisable() }
     }
 

@@ -8,10 +8,7 @@ import top.azimkin.multiMessageBridge.data.*
 import top.azimkin.multiMessageBridge.platforms.BaseReceiver
 import top.azimkin.multiMessageBridge.platforms.dispatchers.*
 import top.azimkin.multiMessageBridge.platforms.handlers.*
-import java.util.*
 import java.util.concurrent.CompletableFuture.runAsync
-import kotlin.reflect.javaType
-import kotlin.reflect.typeOf
 
 class MessagingEventManagerImpl : MessagingEventManager {
     private val logger = LoggerFactory.getLogger("MessagingEventManagerImpl")
@@ -67,7 +64,7 @@ class MessagingEventManagerImpl : MessagingEventManager {
     override fun dispatch(
         dispatcher: ServerSessionDispatcher,
         context: ServerSessionContext
-    ) = runAsync {
+    ) {
         eachTyped<ServerSessionHandler>(dispatcher) { handler ->
             try {
                 handler.handle(context)
@@ -76,7 +73,7 @@ class MessagingEventManagerImpl : MessagingEventManager {
                 MultiMessageBridge.inst.logger.warning("Unable to send serverSessionContext in ${handler.javaClass.name}")
             }
         }
-    }.let { }
+    }
 
     override fun dispatch(
         dispatcher: PlayerLifeDispatcher,

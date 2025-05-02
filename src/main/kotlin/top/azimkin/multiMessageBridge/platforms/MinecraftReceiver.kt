@@ -38,7 +38,7 @@ class MinecraftReceiver(val plugin: JavaPlugin) :
             NoPluginChatHandler(this)
         }).apply {
             addListener(this@MinecraftReceiver::dispatch)
-            addListener { ctx -> runSync { MinecraftChatMessageReceivedEvent(ctx, this@MinecraftReceiver) } }
+            addListener { ctx -> runSync { MinecraftChatMessageReceivedEvent(ctx, this@MinecraftReceiver).callEvent() } }
         }
         logger.info("Using ${chatHandler.javaClass.simpleName} as chat handler!")
     }
@@ -111,6 +111,6 @@ class MinecraftReceiver(val plugin: JavaPlugin) :
     }
 
     override fun onDisable() {
-        dispatch(ServerSessionContext(false))
+        //dispatch(ServerSessionContext(false))
     }
 }
