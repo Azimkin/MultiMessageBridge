@@ -3,9 +3,10 @@ package top.azimkin.multiMessageBridge.platforms.discord.jdaproviders
 import discord4j.core.DiscordClientBuilder
 import discord4j.core.GatewayDiscordClient
 import top.azimkin.multiMessageBridge.platforms.discord.DiscordReceiver
+import java.util.function.Consumer
 
 class CommonDiscordProvider(token: String, receiver: DiscordReceiver) : DiscordProvider {
-    val initQueue = ArrayDeque<(GatewayDiscordClient) -> Unit>()
+    val initQueue = ArrayDeque<Consumer<GatewayDiscordClient>>()
     var client: GatewayDiscordClient? = null
 
     init {
@@ -13,7 +14,7 @@ class CommonDiscordProvider(token: String, receiver: DiscordReceiver) : DiscordP
             .build()
             .login()
             .block()
-        initQueue.forEach { it(client!!) }
+        initQueue.forEach { it.accept(client!!) }
         initQueue.clear()
     }
 
@@ -25,9 +26,9 @@ class CommonDiscordProvider(token: String, receiver: DiscordReceiver) : DiscordP
         return client != null;
     }
 
-    override fun addListener(listener: (GatewayDiscordClient) -> Unit) {
+    override fun addListener(listener: Consumer<GatewayDiscordClient>) {
         if (isInitialized()) {
-            listener(client!!)
+            listener.accept(client!!)
         } else {
             initQueue.add(listener)
         }

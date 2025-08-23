@@ -30,7 +30,6 @@ import top.azimkin.multiMessageBridge.utilities.parseColor
 import java.awt.Color
 import kotlin.jvm.optionals.getOrNull
 
-// I want rewrite everything, just replace it with discord4j
 class DiscordReceiver(val em: MessagingEventManager) :
     ConfigurableReceiver<DiscordReceiverConfig>("Discord", DiscordReceiverConfig::class.java),
     MessageHandler, MessageDispatcher, PlayerLifeHandler, SessionHandler, ServerSessionHandler,
@@ -41,7 +40,7 @@ class DiscordReceiver(val em: MessagingEventManager) :
     val client = createDiscordProvider().apply {
         logger.info("Using ${this.javaClass.simpleName} as jdaProvider")
         addListener(this@DiscordReceiver::attachConsole)
-        addListener { client -> client.on(MessageCreateEvent::class.java).subscribe(this@DiscordReceiver::dispatchMessage) }
+        addListener { it.on(MessageCreateEvent::class.java).subscribe(this@DiscordReceiver::dispatchMessage) }
         addListener {
             while (executeQueue.isNotEmpty()) {
                 executeQueue.removeFirst()()

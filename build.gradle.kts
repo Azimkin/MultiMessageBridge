@@ -57,7 +57,7 @@ dependencies {
     compileOnly("me.clip:placeholderapi:2.11.6")
     compileOnly(fileTree("./libs") { include("*.jar") })
     compileOnly("com.discord4j:discord4j-core:3.2.7")
-    implementation("me.scarsz.jdaappender:discord4j:1.2.4") {
+    implementation("me.scarsz.jdaappender:discord4j:1.2.4.3") {
         exclude(group = "discord4j", module = "discord4j")
     }
 
