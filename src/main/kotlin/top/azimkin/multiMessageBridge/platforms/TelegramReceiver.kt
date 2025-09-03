@@ -64,8 +64,9 @@ class TelegramReceiver(val em: MessagingEventManager) : ConfigurableReceiver<Tel
                 "platform" to context.platform,
                 "role" to (context.role ?: ""),
                 "message" to context.message,
-                "reply_message" to (context.reply ?: ""),
-                "reply_user" to (context.replyUser ?: ""),
+                "reply" to (if (context.replyText != null)
+                    ("[Re. " + context.replyUser + " " + context.replyText + "] ") else
+                    ""),
             )
         )
     }
@@ -181,13 +182,12 @@ class TelegramReceiver(val em: MessagingEventManager) : ConfigurableReceiver<Tel
                 if (update.message()?.text() == null) return
                 dispatch(
                     MessageContext(
-                        update.message().from().username() ?: update.message().from().firstName() ?: "Anonymous",
-                        update.message().text() ?: "",
-                        update.message().replyToMessage() != null,
-                        name,
-                        update.message()?.replyToMessage()?.text(),
-                        update.message()?.replyToMessage()?.from()?.username(),
-                        null
+                        senderName = update.message().from().username() ?: update.message().from().firstName() ?: "Anonymous",
+                        message = update.message().text() ?: "",
+                        platform = name,
+                        replyId = update.message()?.replyToMessage()?.messageId()?.toLong(),
+                        replyText = update.message()?.replyToMessage()?.text(),
+                        replyUser = update.message()?.replyToMessage()?.from()?.username(),
                     )
                 )
             }

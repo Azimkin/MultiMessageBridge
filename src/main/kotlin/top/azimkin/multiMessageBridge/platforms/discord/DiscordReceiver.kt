@@ -61,8 +61,9 @@ class DiscordReceiver(val em: MessagingEventManager) :
                 "nickname" to context.senderName,
                 "platform" to context.platform,
                 "message" to context.message,
-                "old_message" to (context.reply ?: ""),
-                "reply_user" to (context.replyUser ?: ""),
+                "reply" to (if (context.replyText != null)
+                        ("[Re. " + context.replyUser + " " + context.replyText + "] ") else
+                            ""),
             )
         )
         sendMessageToChannel(
@@ -156,14 +157,14 @@ class DiscordReceiver(val em: MessagingEventManager) :
         when (channelConfig.type) {
             "main_text" -> {
                 val context = MessageContext(
-                    event.member.getOrNull()?.displayName ?: event.message.author.getOrNull()?.username ?: "unknown",
-                    event.message.content,
-                    event.message.referencedMessage != null,
-                    name,
-                    event.message.referencedMessage.getOrNull()?.content,
-                    event.message.referencedMessage.getOrNull()?.authorAsMember?.block()?.displayName
+                    senderName = event.member.getOrNull()?.displayName ?: event.message.author.getOrNull()?.username ?: "unknown",
+                    message = event.message.content,
+                    platform = name,
+                    replyId = event.message.referencedMessage.getOrNull()?.id?.asLong(),
+                    replyText = event.message.referencedMessage.getOrNull()?.content,
+                    replyUser = event.message.referencedMessage.getOrNull()?.authorAsMember?.block()?.displayName
                         ?: event.message.referencedMessage.getOrNull()?.author?.getOrNull()?.username ?: "unknown",
-                    event.member.getOrNull()?.highestRole?.map { it.name }?.onErrorResume { t -> Mono.just("Player") }
+                    role = event.member.getOrNull()?.highestRole?.map { it.name }?.onErrorResume { t -> Mono.just("Player") }
                         ?.block(),
                     roleColor = event.member.getOrNull()?.highestRole?.map { r -> r.color }?.blockOptional()
                         ?.getOrNull()?.let { Color(it.red, it.green, it.blue) },

@@ -51,6 +51,7 @@ dependencies {
     compileOnly("io.papermc.paper:paper-api:1.19.4-R0.1-SNAPSHOT")
     implementation("com.github.pengrad:java-telegram-bot-api:7.9.1")
     implementation("eu.okaeri:okaeri-configs-yaml-bukkit:5.0.5")
+    implementation("com.j256.ormlite:ormlite-jdbc:6.1")
 
     compileOnly("com.github.MilkBowl:VaultAPI:1.7.1")
     compileOnly("net.luckperms:api:5.4")

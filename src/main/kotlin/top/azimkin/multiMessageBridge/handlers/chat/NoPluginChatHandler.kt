@@ -19,13 +19,12 @@ class NoPluginChatHandler(val minecraftReceiver: MinecraftReceiver) : ChatHandle
     fun onMinecraftMessage(event: AsyncChatEvent) {
         if (event.isCancelled) return
         onReceive(MessageContext(
-            event.player.name,
-            event.message().toPlainText(),
-            false,
-            minecraftReceiver.name,
-            null,
-            null,
-            MultiMessageBridge.inst.metadataProvider.getPrefix(event.player)
+            senderName = event.player.name,
+            message = event.message().toPlainText(),
+            platform = minecraftReceiver.name,
+            replyId = null,
+            replyText = null,
+            replyUser = MultiMessageBridge.inst.metadataProvider.getPrefix(event.player)
         ))
     }
 }

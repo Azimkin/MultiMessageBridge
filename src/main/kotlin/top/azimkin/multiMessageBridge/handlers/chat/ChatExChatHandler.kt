@@ -33,13 +33,10 @@ class ChatExChatHandler(val minecraftReceiver: MinecraftReceiver, config: Map<St
     private fun dispatchMessage(player: Player, message: String) {
         onReceive(
             MessageContext(
-                player.name,
+                senderName = player.name,
                 message,
-                false,
-                minecraftReceiver.name,
-                null,
-                null,
-                MultiMessageBridge.inst.metadataProvider.getPrefix(player)
+                platform = minecraftReceiver.name,
+                role = MultiMessageBridge.inst.metadataProvider.getPrefix(player)
             )
         )
     }

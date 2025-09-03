@@ -9,6 +9,7 @@ import top.azimkin.mmb.Metrics
 import top.azimkin.multiMessageBridge.api.events.AsyncHeadImageProviderRegistrationEvent
 import top.azimkin.multiMessageBridge.api.events.ReceiverRegistrationEvent
 import top.azimkin.multiMessageBridge.commands.MainCommand
+import top.azimkin.multiMessageBridge.configuration.DatabaseConfig
 import top.azimkin.multiMessageBridge.configuration.MMBConfiguration
 import top.azimkin.multiMessageBridge.data.ServerInfoContext
 import top.azimkin.multiMessageBridge.data.ServerSessionContext
@@ -24,6 +25,14 @@ import top.azimkin.multiMessageBridge.providers.skins.SkinHeadProvider
 import top.azimkin.multiMessageBridge.utilities.DateFormatter
 import top.azimkin.multiMessageBridge.utilities.Translator
 import top.azimkin.multiMessageBridge.utilities.runBukkitAsync
+import top.azimkin.multiMessageBridge.entities.repo.PlatformMappingRepoImpl
+import top.azimkin.multiMessageBridge.entities.repo.MessageRepoImpl
+import top.azimkin.multiMessageBridge.services.MessageCleanupService
+import top.azimkin.multiMessageBridge.services.MessageService
+import top.azimkin.multiMessageBridge.services.database.DatabaseManager
+import top.azimkin.multiMessageBridge.services.database.DatabaseManagerFactory
+import top.azimkin.multiMessageBridge.services.username.UsernameApiService
+import top.azimkin.multiMessageBridge.services.username.UsernameApiServiceImpl
 import java.io.File
 
 class MultiMessageBridge : JavaPlugin() {
@@ -40,6 +49,12 @@ class MultiMessageBridge : JavaPlugin() {
     lateinit var headProvider: SkinHeadProvider private set
     lateinit var metadataProvider: PlayerMetadataProvider private set
     lateinit var pluginConfig: MMBConfiguration private set
+    lateinit var databaseConfig: DatabaseConfig private set
+
+    lateinit var dbManager: DatabaseManager private set
+    lateinit var messageService: MessageService private set
+    lateinit var usernameApiService: UsernameApiService private set
+    lateinit var messageCleanupService: MessageCleanupService private set
     val uptime: Long get() = System.currentTimeMillis() - enabledIn
     val dateFormatter = DateFormatter { pluginConfig.timeFormat }
 
@@ -51,9 +66,23 @@ class MultiMessageBridge : JavaPlugin() {
             tabCompleter = MainCommand
         }
 
-        server.pluginManager.registerEvents(CommonListener, this)
-
         reload()
+
+        dbManager = DatabaseManagerFactory.create(this, databaseConfig)
+        dbManager.init()
+        val messageDao = dbManager.getMessageDao()
+        val mappingDao = dbManager.getMappingDao()
+
+        val messageRepo = MessageRepoImpl(messageDao)
+        val mappingRepo = PlatformMappingRepoImpl(mappingDao)
+
+        messageService = MessageService(messageRepo, mappingRepo)
+        usernameApiService = UsernameApiServiceImpl()
+
+        messageCleanupService = MessageCleanupService(this, messageRepo, mappingRepo, databaseConfig)
+        messageCleanupService.scheduleCleanupTask()
+
+        server.pluginManager.registerEvents(CommonListener, this)
 
         ReceiverRegistrationEvent(messagingEventManager).callEvent()
         messagingEventManager.enable(pluginConfig.enabledReceivers)
@@ -68,6 +97,7 @@ class MultiMessageBridge : JavaPlugin() {
     }
 
     override fun onDisable() {
+        dbManager.disable()
         val mc = messagingEventManager.receivers.first { it is MinecraftReceiver } as MinecraftReceiver
         messagingEventManager.dispatch(mc, ServerSessionContext(false))
         messagingEventManager.receivers.forEach { it.onDisable() }
@@ -108,6 +138,13 @@ class MultiMessageBridge : JavaPlugin() {
         pluginConfig = ConfigManager.create(MMBConfiguration::class.java) {
             it.withConfigurer(YamlBukkitConfigurer())
             it.withBindFile(File(dataFolder, "config.yml"))
+            it.withRemoveOrphans(true)
+            it.saveDefaults()
+            it.load(true)
+        }
+        databaseConfig = ConfigManager.create(DatabaseConfig::class.java) {
+            it.withConfigurer(YamlBukkitConfigurer())
+            it.withBindFile(File(dataFolder, "database.yml"))
             it.withRemoveOrphans(true)
             it.saveDefaults()
             it.load(true)
