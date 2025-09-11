@@ -23,4 +23,4 @@ commands:
 
 libraries:
   - 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.10'
-  - "com.discord4j:discord4j-core:3.2.7"
+#  - "com.discord4j:discord4j-core:3.2.9"

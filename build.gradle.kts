@@ -57,7 +57,7 @@ dependencies {
     compileOnly("net.luckperms:api:5.4")
     compileOnly("me.clip:placeholderapi:2.11.6")
     compileOnly(fileTree("./libs") { include("*.jar") })
-    compileOnly("com.discord4j:discord4j-core:3.2.7")
+    compileOnly("com.discord4j:discord4j-core:3.2.9")
     implementation("me.scarsz.jdaappender:discord4j:1.2.4.3") {
         exclude(group = "discord4j", module = "discord4j")
     }
@@ -89,18 +89,21 @@ tasks {
 
     shadowJar {
         exclude("kotlin/**")
-        exclude("org/**")
-        exclude("javax/**")
-        exclude("com/google/gson/**")
-        exclude("discord4j/**")
-        exclude("com/discord4j/**")
-        exclude("com/github/**")
-        exclude("com/fasterxml/**")
-        exclude("com/austinv11/**")
-        exclude("reactor/**")
-        exclude("io/netty/**")
-        exclude("google/**")
-        exclude("META-INF/**")
+//
+//        exclude("org/**")
+//        exclude("javax/**")
+//        exclude("com/google/gson/**")
+//        exclude("discord4j/**")
+//        exclude("com/discord4j/**")
+//        exclude("com/github/**")
+//        exclude("com/fasterxml/**")
+//        exclude("com/austinv11/**")
+//        exclude("reactor/**")
+//        exclude("io/netty/**")
+//        exclude("google/**")
+//        exclude("META-INF/**")
+//
+        relocate("io.netty", "remap.netty")
     }
 
     test {
