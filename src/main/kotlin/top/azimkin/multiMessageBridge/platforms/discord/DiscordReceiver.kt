@@ -7,6 +7,7 @@ import discord4j.core.`object`.entity.channel.GuildMessageChannel
 import discord4j.core.`object`.entity.channel.TextChannel
 import discord4j.core.spec.EmbedCreateFields.Author
 import discord4j.core.spec.EmbedCreateSpec
+import discord4j.core.spec.MessageCreateSpec
 import discord4j.core.spec.TextChannelEditSpec
 import me.scarsz.jdaappender.ChannelLoggingHandler
 import reactor.core.publisher.Mono
@@ -53,22 +54,31 @@ class DiscordReceiver(val em: MessagingEventManager) :
         super.onDisable()
     }
 
-    override fun handle(context: MessageContext) {
+    override fun handle(context: MessageContext): Long? {
+        val sticker = config.messages.sticker.replace("<sticker_name>", (context.sticker ?: "null"))
+        val attachment = config.messages.attachment
         val base = getMessageOrBase(context.platform)
+
+        var text = (context.message ?: "")
+        var images = ""
+        for(img in context.images){
+            images += "\n" + img
+        }
+        text += images
+
         val preparedMessage = base.formatByMap(
             mapOf(
                 "role" to (context.role ?: ""),
                 "nickname" to context.senderName,
                 "platform" to context.platform,
-                "message" to context.message,
-                "reply" to (if (context.replyText != null)
-                        ("[Re. " + context.replyUser + " " + context.replyText + "] ") else
-                            ""),
+                "message" to text,
+                "sticker" to (if (context.sticker != null) sticker else ""),
+                "attachment" to (if (context.attachment) attachment else "")
             )
         )
-        sendMessageToChannel(
+        return sendMessageToChannel(
             preparedMessage.replace("@everyone", "евериване", true)
-                .replace("@here", "хере", true)
+                .replace("@here", "хере", true, ), replyId=context.replyId
         )
     }
 
@@ -138,10 +148,20 @@ class DiscordReceiver(val em: MessagingEventManager) :
             ).subscribe()
         }
 
-    fun sendMessageToChannel(message: String, channel: String = "main_text") = addAction {
-        val channel = findChannel(channel)?.id ?: return@addAction
-        val textChannel = getChannelBlocking(channel) ?: return@addAction
-        textChannel.createMessage(message).subscribe()
+    fun sendMessageToChannel(message: String, channel: String = "main_text", replyId: Long? = null): Long?{
+        val channel = findChannel(channel)?.id ?: return null
+        val textChannel = getChannelBlocking(channel) ?: return null
+        var spec = textChannel.createMessage(message).withContent(message)
+        if(replyId != null) {
+            val id = Snowflake.of(replyId)
+            try {
+                spec = spec.withMessageReferenceId(id)
+            } catch (e: Throwable){
+                e.printStackTrace()
+            }
+        }
+        val message = spec.block()
+        return message?.id?.asLong()
     }
 
     private fun getChannelBlocking(id: Long) = client.get().getChannelById(Snowflake.of(id))
@@ -154,21 +174,40 @@ class DiscordReceiver(val em: MessagingEventManager) :
         if (event.message.author.getOrNull()?.isBot == true && bukkitEvent.mustBeCanceledIfBot) return
         //MultiMessageBridge.inst.logger.info(event.toString())
         val channelConfig = findChannel(id = event.message.channelId.asLong()) ?: return
+
+        val stickerItems = event.message.stickersItems
+        val sticker =  if (stickerItems.isNotEmpty()) stickerItems.last().name else null
+
+        val images = event.message.attachments.filter{
+            it.contentType.isPresent && it.contentType.get().startsWith("image")
+        }.map{it.url}
+
+        var attachment = false
+        for (atchmnt in event.message.attachments){
+            if (!(atchmnt.contentType.getOrNull()?.startsWith("image") ?: true)){
+                attachment = true
+                break
+            }
+        }
+
         when (channelConfig.type) {
             "main_text" -> {
                 val context = MessageContext(
                     senderName = event.member.getOrNull()?.displayName ?: event.message.author.getOrNull()?.username ?: "unknown",
+                    senderPlatformId = event.member.getOrNull()?.id?.asLong(),
                     message = event.message.content,
+                    messagePlatformId = event.message.id.asLong(),
+                    sticker = sticker,
+                    images = images,
                     platform = name,
                     replyId = event.message.referencedMessage.getOrNull()?.id?.asLong(),
-                    replyText = event.message.referencedMessage.getOrNull()?.content,
                     replyUser = event.message.referencedMessage.getOrNull()?.authorAsMember?.block()?.displayName
                         ?: event.message.referencedMessage.getOrNull()?.author?.getOrNull()?.username ?: "unknown",
                     role = event.member.getOrNull()?.highestRole?.map { it.name }?.onErrorResume { t -> Mono.just("Player") }
                         ?.block(),
                     roleColor = event.member.getOrNull()?.highestRole?.map { r -> r.color }?.blockOptional()
                         ?.getOrNull()?.let { Color(it.red, it.green, it.blue) },
-                    urlAttachments = event.message.attachments.map { it.url },
+                    attachment = attachment,
                 )
                 dispatch(context)
             }

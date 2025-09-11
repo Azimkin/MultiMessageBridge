@@ -9,8 +9,8 @@ import top.azimkin.mmb.Metrics
 import top.azimkin.multiMessageBridge.api.events.AsyncHeadImageProviderRegistrationEvent
 import top.azimkin.multiMessageBridge.api.events.ReceiverRegistrationEvent
 import top.azimkin.multiMessageBridge.commands.MainCommand
-import top.azimkin.multiMessageBridge.configuration.DatabaseConfig
 import top.azimkin.multiMessageBridge.configuration.MMBConfiguration
+import top.azimkin.multiMessageBridge.configuration.DatabaseConfig
 import top.azimkin.multiMessageBridge.data.ServerInfoContext
 import top.azimkin.multiMessageBridge.data.ServerSessionContext
 import top.azimkin.multiMessageBridge.listeners.CommonListener
@@ -31,8 +31,10 @@ import top.azimkin.multiMessageBridge.services.MessageCleanupService
 import top.azimkin.multiMessageBridge.services.MessageService
 import top.azimkin.multiMessageBridge.services.database.DatabaseManager
 import top.azimkin.multiMessageBridge.services.database.DatabaseManagerFactory
-import top.azimkin.multiMessageBridge.services.username.UsernameApiService
-import top.azimkin.multiMessageBridge.services.username.UsernameApiServiceImpl
+import top.azimkin.multiMessageBridge.services.imagehosting.ImageHosting
+import top.azimkin.multiMessageBridge.services.imagehosting.ImageHostingFactory
+import top.azimkin.multiMessageBridge.providers.username.UsernameProvider
+import top.azimkin.multiMessageBridge.providers.username.UsernameProviderImpl
 import java.io.File
 
 class MultiMessageBridge : JavaPlugin() {
@@ -44,16 +46,17 @@ class MultiMessageBridge : JavaPlugin() {
         inst = this
     }
 
-    var messagingEventManager: MessagingEventManager = MessagingEventManagerImpl(); private set
     var enabledIn = System.currentTimeMillis(); private set
+    lateinit var messagingEventManager: MessagingEventManager private set
     lateinit var headProvider: SkinHeadProvider private set
     lateinit var metadataProvider: PlayerMetadataProvider private set
     lateinit var pluginConfig: MMBConfiguration private set
     lateinit var databaseConfig: DatabaseConfig private set
 
+    lateinit var imageHosting: ImageHosting private set
     lateinit var dbManager: DatabaseManager private set
     lateinit var messageService: MessageService private set
-    lateinit var usernameApiService: UsernameApiService private set
+    lateinit var usernameProvider: UsernameProvider private set
     lateinit var messageCleanupService: MessageCleanupService private set
     val uptime: Long get() = System.currentTimeMillis() - enabledIn
     val dateFormatter = DateFormatter { pluginConfig.timeFormat }
@@ -77,10 +80,13 @@ class MultiMessageBridge : JavaPlugin() {
         val mappingRepo = PlatformMappingRepoImpl(mappingDao)
 
         messageService = MessageService(messageRepo, mappingRepo)
-        usernameApiService = UsernameApiServiceImpl()
+        usernameProvider = UsernameProviderImpl()
 
         messageCleanupService = MessageCleanupService(this, messageRepo, mappingRepo, databaseConfig)
         messageCleanupService.scheduleCleanupTask()
+        imageHosting = ImageHostingFactory.create(pluginConfig)
+
+        messagingEventManager = MessagingEventManagerImpl(messageService, usernameProvider, imageHosting);
 
         server.pluginManager.registerEvents(CommonListener, this)
 

@@ -1,28 +1,31 @@
 package top.azimkin.multiMessageBridge.entities
+import com.j256.ormlite.dao.ForeignCollection
 import com.j256.ormlite.field.DatabaseField
+import com.j256.ormlite.field.ForeignCollectionField
 import com.j256.ormlite.table.DatabaseTable
+import com.pengrad.telegrambot.model.Message
 import java.util.Date
 
 @DatabaseTable(tableName = "messages")
 data class CrossPlatformMessage(
     @DatabaseField(generatedId = true)
-    val id: Long = 0,
+    var id: Long = 0,
 
     @DatabaseField(canBeNull = false, index = true)
-    val authorUsername: String = "",
+    var authorUsername: String = "",
 
     @DatabaseField(canBeNull = false, width = 5000)
-    val text: String = "",
+    var text: String = "",
 
     @DatabaseField
-    val imageUrl: String? = null,
-
-    @DatabaseField
-    val sticker: String? = null,
+    var sticker: String? = null,
 
     @DatabaseField(foreign = true, foreignAutoRefresh = true)
     var replyTo: CrossPlatformMessage? = null,
 
+    @ForeignCollectionField
+    var mappings: ForeignCollection<MessagePlatformMapping>? = null,
+
     @DatabaseField(canBeNull = false)
-    val timestamp: Date = Date(),
+    var timestamp: Date = Date(),
 )

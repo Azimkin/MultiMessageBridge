@@ -6,17 +6,20 @@ import java.util.Date
 @DatabaseTable(tableName = "message_platform_mappings")
 data class MessagePlatformMapping(
     @DatabaseField(generatedId = true)
-    val id: Long = 0,
+    var id: Long = 0,
 
     @DatabaseField(foreign = true, canBeNull = false, foreignAutoRefresh = true)
-    val message: CrossPlatformMessage = CrossPlatformMessage(),
+    var message: CrossPlatformMessage = CrossPlatformMessage(),
 
     @DatabaseField(canBeNull = false, index = true)
-    val platform: String = "",
+    var platform: String = "",
 
-    @DatabaseField(canBeNull = false, index = true)
-    val platformMessageId: Long = 0,
+    @DatabaseField(index = true)
+    var platformMessageId: Long? = null,
 
     @DatabaseField(canBeNull = false)
-    val timestamp: Date = Date()
+    var platformMessageText: String = "",
+
+    @DatabaseField(canBeNull = false)
+    var timestamp: Date = Date()
     )

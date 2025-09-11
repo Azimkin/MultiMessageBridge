@@ -3,11 +3,11 @@ import eu.okaeri.configs.OkaeriConfig
 import eu.okaeri.configs.annotation.Comment
 
 data class DatabaseConfig(
-    @Comment("Should plugin use bStats and publish metrics on https://bstats.org/plugin/bukkit/MultiMessageBridge/24055")
+    @Comment("database to use: sqlite, mysql")
     var type: String = "sqlite",
-    @Comment("This part describes anything about heads?")
+    @Comment("SQLite config")
     var sqlite: SQLiteConfig = SQLiteConfig(),
-    @Comment("Message receivers that must be enabled")
+    @Comment("MySql Config")
     var mysql: MySQLConfig = MySQLConfig(),
 
     var cleanup: CleanupConfig = CleanupConfig(),
@@ -16,7 +16,7 @@ data class DatabaseConfig(
 data class CleanupConfig(
     @Comment("Cleanup interval in MINUTES")
     var intervalMinutes: Int = 24 * 60,
-    @Comment("Cleans every message older that that many HOURS")
+    @Comment("Cleans every message older than that many HOURS")
     var olderThanHours: Int = 24 * 7
 ) : OkaeriConfig()
 

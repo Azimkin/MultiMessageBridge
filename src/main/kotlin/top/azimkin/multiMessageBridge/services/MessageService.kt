@@ -13,7 +13,6 @@ class MessageService(
     fun createNewMessage(
         authorUsername: String,
         text: String,
-        imageUrl: String? = null,
         sticker: String? = null,
         replyToId: Long? = null
     ): CrossPlatformMessage? {
@@ -23,7 +22,6 @@ class MessageService(
         val message = CrossPlatformMessage(
             authorUsername = authorUsername,
             text = text,
-            imageUrl = imageUrl,
             sticker = sticker,
             replyTo = replyTo
         )
@@ -34,24 +32,22 @@ class MessageService(
     fun addPlatformMapping(
         message: CrossPlatformMessage,
         platform: String,
-        platformMessageId: Long
+        platformMessageId: Long?,
+        platformMessageText: String
     ): Boolean {
         return mappingRepo.createMapping(
             MessagePlatformMapping(
                 message = message,
                 platform = platform,
-                platformMessageId = platformMessageId
+                platformMessageId = platformMessageId,
+                platformMessageText = platformMessageText
             )
         )
     }
 
-    fun findMessageByPlatformId(platform: String, messageId: Long): CrossPlatformMessage? {
-        return mappingRepo.findByPlatformMessageId(platform, messageId)?.message
-    }
+    fun findMessageByPlatformId(messageId: Long, platform: String) =
+        mappingRepo.findByPlatformMessageId(platform, messageId)?.message
 
-    fun getMessage(id: Long): Pair<CrossPlatformMessage?, List<MessagePlatformMapping>> {
-        val message = messageRepo.get(id)
-        val mappings = message?.let { mappingRepo.findMessagePlatforms(id) } ?: emptyList()
-        return Pair(message, mappings)
-    }
+
+    fun getMessage(id: Long) = messageRepo.get(id)
 }

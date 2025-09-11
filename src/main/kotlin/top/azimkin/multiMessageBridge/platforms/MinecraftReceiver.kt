@@ -44,23 +44,48 @@ class MinecraftReceiver(val plugin: JavaPlugin) :
     }
 
 
-    override fun handle(context: MessageContext) {
+    override fun handle(context: MessageContext): Long? {
         val baseMessage = getMessageOrBase(context.platform)
-        if (context.message.startsWith("https://") || context.message.startsWith("http://")) return
+        var message = context.message ?: ""
+
+        var images = ""
+        for(img in context.images){
+            images = images + config.messages.attachment.replace("<url>", img) + " "
+        }
+
+        val sticker = config.messages.sticker.replace("<sticker_name>",
+            context.sticker ?: "null")
+
+        message = message.replace(Regex("(https?://[^ ]+)"),
+            config.messages.link.replace("<url>", "$1"))
         val formattedMessage = deserialize(
             baseMessage,
             mapOf(
                 "platform" to context.platform,
                 "role" to coloredRole(context.role, context.roleColor),
                 "nickname" to context.senderName,
-                "message" to context.message
+                "message" to message,
+                "reply" to (if (context.replyText != null) config.messages.reply else ""),
+                "user" to (context.replyUser ?: "null"),
+                "reply_text" to (context.replyText ?: "null"),
+                "sticker" to (if (context.sticker != null) sticker else ""),
+                "attachments" to images
             )
         )
+
+        context.message = "<message><sticker><attachments>".formatByMap(mapOf(
+            "message" to message,
+            "sticker" to (if (context.sticker != null) sticker else ""),
+            "attachments" to images
+        ))
+
         runSync {
             for (player in Bukkit.getOnlinePlayers()) {
                 player.sendMessage(formattedMessage)
             }
         }
+
+        return null
     }
 
     private fun coloredRole(role: String?, color: Color?): String {

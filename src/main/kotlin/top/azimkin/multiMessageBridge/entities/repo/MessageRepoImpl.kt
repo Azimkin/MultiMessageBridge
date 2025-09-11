@@ -8,8 +8,9 @@ class MessageRepoImpl(private val dao: Dao<CrossPlatformMessage, Long>
 ) : MessageRepo{
     override fun get(id: Long): CrossPlatformMessage? {
         return try {
-            dao.queryBuilder().where().eq("message_id", id).queryForFirst()
-        } catch (_: SQLException) {
+            dao.queryBuilder().where().eq("id", id).queryForFirst()
+        } catch (e: Throwable) {
+            e.printStackTrace()
             null
         }
     }
@@ -17,7 +18,8 @@ class MessageRepoImpl(private val dao: Dao<CrossPlatformMessage, Long>
     override fun create(message: CrossPlatformMessage): Boolean {
         return try {
             dao.create(message) == 1
-        } catch (_: SQLException) {
+        } catch (e: Throwable) {
+            e.printStackTrace()
             false
         }
     }
@@ -25,7 +27,8 @@ class MessageRepoImpl(private val dao: Dao<CrossPlatformMessage, Long>
     override fun update(message: CrossPlatformMessage): Boolean {
         return try {
             dao.update(message) == 1
-        } catch (_: SQLException) {
+        } catch (e: Throwable) {
+            e.printStackTrace()
             false
         }
     }
@@ -33,7 +36,8 @@ class MessageRepoImpl(private val dao: Dao<CrossPlatformMessage, Long>
     override fun delete(message: CrossPlatformMessage): Int {
         return try{
             dao.delete(message)
-        } catch (_: SQLException){
+        } catch (e: Throwable){
+            e.printStackTrace()
             0
         }
     }
@@ -43,7 +47,8 @@ class MessageRepoImpl(private val dao: Dao<CrossPlatformMessage, Long>
             val deleteBuilder = dao.deleteBuilder()
             deleteBuilder.where().lt("timestamp", timestamp)
             deleteBuilder.delete() == 1
-        } catch (_: SQLException){
+        } catch (e: Throwable){
+            e.printStackTrace()
             false
         }
     }
@@ -54,7 +59,8 @@ class MessageRepoImpl(private val dao: Dao<CrossPlatformMessage, Long>
                 .orderBy("timestamp", false)
                 .limit(limit.toLong())
                 .query()
-        } catch (_: SQLException) {
+        } catch (e: Throwable) {
+            e.printStackTrace()
             emptyList()
         }
     }

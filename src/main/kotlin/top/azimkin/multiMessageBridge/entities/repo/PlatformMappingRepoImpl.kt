@@ -10,7 +10,7 @@ class PlatformMappingRepoImpl(
     override fun createMapping(mapping: MessagePlatformMapping): Boolean {
         return try {
             dao.create(mapping) == 1
-        } catch (_: SQLException) {
+        } catch (e: Throwable){e.printStackTrace()
             false
         }
     }
@@ -18,7 +18,7 @@ class PlatformMappingRepoImpl(
     override fun delete(mapping: MessagePlatformMapping): Boolean {
         return try{
             dao.delete(mapping) == 1
-        } catch (_: SQLException) {
+        } catch (e: Throwable){e.printStackTrace()
             false
         }
     }
@@ -28,7 +28,7 @@ class PlatformMappingRepoImpl(
             val deleteBuilder = dao.deleteBuilder()
             deleteBuilder.where().lt("timestamp", timestamp)
             deleteBuilder.delete()
-        } catch (_: SQLException){
+        } catch (e: Throwable){e.printStackTrace()
             0
         }
     }
@@ -38,7 +38,7 @@ class PlatformMappingRepoImpl(
             dao.queryBuilder().where()
                 .eq("platformMessageId", messageId)
                 .and().eq("platform", platform).queryForFirst()
-        } catch (_: SQLException) {
+        } catch (e: Throwable){e.printStackTrace()
             null
         }
     }
@@ -48,7 +48,7 @@ class PlatformMappingRepoImpl(
             dao.queryBuilder()
                 .where().eq("message_id", messageId)
                 .query() ?: return emptyList()
-        } catch (_: SQLException) {
+        } catch (e: Throwable){e.printStackTrace()
             emptyList()
         }
     }

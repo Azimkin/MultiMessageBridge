@@ -1,16 +1,26 @@
 package top.azimkin.multiMessageBridge
 
+import com.j256.ormlite.dao.ForeignCollection
 import org.bukkit.Bukkit
 import org.slf4j.LoggerFactory
 import top.azimkin.multiMessageBridge.api.events.AsyncChatMessageDispatchedEvent
 import top.azimkin.multiMessageBridge.api.events.ReceiverEnabledEvent
 import top.azimkin.multiMessageBridge.data.*
+import top.azimkin.multiMessageBridge.entities.CrossPlatformMessage
+import top.azimkin.multiMessageBridge.entities.MessagePlatformMapping
 import top.azimkin.multiMessageBridge.platforms.BaseReceiver
 import top.azimkin.multiMessageBridge.platforms.dispatchers.*
 import top.azimkin.multiMessageBridge.platforms.handlers.*
+import top.azimkin.multiMessageBridge.services.MessageService
+import top.azimkin.multiMessageBridge.services.imagehosting.ImageHosting
+import top.azimkin.multiMessageBridge.providers.username.UsernameProvider
 import java.util.concurrent.CompletableFuture.runAsync
 
-class MessagingEventManagerImpl : MessagingEventManager {
+class MessagingEventManagerImpl(
+    val messageService: MessageService,
+    val usernameProvider: UsernameProvider,
+    val imageHosting: ImageHosting
+) : MessagingEventManager {
     private val logger = LoggerFactory.getLogger("MessagingEventManagerImpl")
 
     private val baseReceivers = HashMap<String, BaseReceiver>()
@@ -26,12 +36,80 @@ class MessagingEventManagerImpl : MessagingEventManager {
         val event = AsyncChatMessageDispatchedEvent(context)
         val res = event.callEvent()
         if (!res) return@runAsync
+
+        if(context.message == null &&
+            context.sticker == null &&
+            context.images.isEmpty())
+            return@runAsync
+
+        val username = context.senderPlatformId?.let {
+            usernameProvider.getUsername(it, context.platform)
+        } ?: context.senderName
+
+        var replyMessage: CrossPlatformMessage? = null
+        val replyToId = context.replyId?.let{
+            replyMessage = messageService.findMessageByPlatformId(it, context.platform)
+            replyMessage?.id
+        }
+
+        val imageUrls = mutableListOf<String>()
+        for (imageData in context.images) {
+            imageHosting.uploadImage(imageData)?.let{
+                imageUrls.add(it)
+            }
+        }
+
+        context.images = imageUrls
+
+        val handlingMessage = messageService.createNewMessage(
+            authorUsername = username,
+            text = context.message ?: "",
+            sticker = context.sticker,
+            replyToId=replyToId
+        )!!
+
+
+        messageService.addPlatformMapping(handlingMessage,
+            context.platform,
+            context.messagePlatformId!!,
+            context.message ?: ""
+        )
+
+        context.message = context.message ?: ""
+
+        var mappingCollection: ForeignCollection<MessagePlatformMapping>? = null
+        if(replyMessage != null) {
+            mappingCollection = replyMessage.mappings
+            context.replyUser = replyMessage.authorUsername
+            context.replyText = replyMessage.text
+        }
         eachTyped<MessageHandler>(dispatcher) { handler ->
             try {
                 val receiver = handler as? BaseReceiver
                     ?: receivers.find { it == handler }
                     ?: throw Exception("BaseReceiver not found")
-                handler.preHandle(event.context, receiver)
+
+                MultiMessageBridge.inst.logger.info("${context.message}: ${receiver.name}")
+
+                context.replyId = null
+                if (replyMessage != null && mappingCollection != null){
+                    for (item in mappingCollection) {
+                        if (item.platform == receiver.name)
+                            context.replyId = item.platformMessageId
+                        if (item.platform == "Minecraft"){
+                            context.replyText = item.platformMessageText
+                        }
+                    }
+                }
+
+                val platformId = handler.preHandle(event.context, receiver)
+
+                messageService.addPlatformMapping(
+                    handlingMessage,
+                    receiver.name,
+                    platformId,
+                    context.message ?: "")
+
             } catch (e: Exception) {
                 MultiMessageBridge.inst.logger.warning("Unable to send message context in ${handler.javaClass.name}")
                 e.printStackTrace()

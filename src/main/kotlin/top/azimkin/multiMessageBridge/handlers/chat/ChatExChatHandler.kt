@@ -34,7 +34,7 @@ class ChatExChatHandler(val minecraftReceiver: MinecraftReceiver, config: Map<St
         onReceive(
             MessageContext(
                 senderName = player.name,
-                message,
+                message = message,
                 platform = minecraftReceiver.name,
                 role = MultiMessageBridge.inst.metadataProvider.getPrefix(player)
             )

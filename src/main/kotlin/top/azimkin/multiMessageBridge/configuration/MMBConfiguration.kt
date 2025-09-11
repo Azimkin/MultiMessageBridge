@@ -16,6 +16,8 @@ import eu.okaeri.configs.annotation.Header
 data class MMBConfiguration(
     @Comment("Should plugin use bStats and publish metrics on https://bstats.org/plugin/bukkit/MultiMessageBridge/24055")
     var metrics: Boolean = true,
+    @Comment("Image hosting configuration")
+    var imageHosting: ImageHosting = ImageHosting(),
     @Comment("This part describes anything about heads?")
     var heads: HeadsConfiguration = HeadsConfiguration(),
     @Comment("Message receivers that must be enabled")
@@ -49,7 +51,9 @@ data class MessageList(
     @Transient private val customMessageType: String = "text",
     @Transient private val customProperties: Map<String, String> = emptyMap(),
     @Comment("Here you can configure how chat message will look on your platform if it sent from every other receiver")
-    var messageBase: MessageConfiguration = MessageConfiguration("<platform> <nickname> -> <message>"),
+    var messageBase: MessageConfiguration = MessageConfiguration("<platform> <nickname> -> <message> <sticker><attachment>"),
+    val sticker: String = "[sticker:<sticker_name>] ",
+    val attachment: String = "[attachment] ",
     @Comment("Also here you can configure how chat messages will look from any receiver in that format:")
     @Comment("    customFormats: # just a section name")
     @Comment("      PlatformName: # platform name, for example for discord is Discord")
@@ -87,4 +91,9 @@ data class MessageConfiguration(
     var format: String = "unknown",
     var type: String = "text",
     var configuration: Map<String, String> = emptyMap(),
+) : OkaeriConfig()
+
+data class ImageHosting(
+    @Comment("Image Hosting to use: freeimage")
+    var type : String = "freeimage",
 ) : OkaeriConfig()
