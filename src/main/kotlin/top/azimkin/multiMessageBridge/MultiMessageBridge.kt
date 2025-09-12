@@ -7,7 +7,6 @@ import org.bukkit.Bukkit
 import org.bukkit.plugin.java.JavaPlugin
 import org.bukkit.scheduler.BukkitTask
 import top.azimkin.mmb.Metrics
-import top.azimkin.multiMessageBridge.api.events.AsyncHeadImageProviderRegistrationEvent
 import top.azimkin.multiMessageBridge.api.events.ImplementationsRegistrationEvent
 import top.azimkin.multiMessageBridge.commands.MainCommand
 import top.azimkin.multiMessageBridge.configuration.MMBConfiguration
