@@ -39,8 +39,8 @@ repositories {
     }
     maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
     maven {
-        name = "azimkinRepoReleases"
-        url = uri("https://repo.azimkin.top/releases")
+        name = "fairkorReleases"
+        url = uri("https://repo.fairkor.pro/releases")
     }
     maven("https://jitpack.io")
 

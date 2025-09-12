@@ -46,7 +46,7 @@ class MultiMessageBridge : JavaPlugin() {
         inst = this
     }
 
-    var enabledIn = System.currentTimeMillis(); private set
+    var enabledIn: Long = System.currentTimeMillis(); private set
     lateinit var messagingEventManager: MessagingEventManager private set
     lateinit var headProvider: SkinHeadProvider private set
     lateinit var metadataProvider: PlayerMetadataProvider private set
