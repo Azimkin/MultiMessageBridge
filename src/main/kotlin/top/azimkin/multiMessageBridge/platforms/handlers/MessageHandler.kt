@@ -10,11 +10,12 @@ interface MessageHandler : BaseHandler {
         if (context is MessageContext) handle(context)
     }
 
-    fun handle(context: MessageContext)
+    fun handle(context: MessageContext): Long?
 
-    fun preHandle(context: MessageContext, dispatcher: BaseReceiver) {
+    fun preHandle(context: MessageContext, dispatcher: BaseReceiver): Long? {
         val event = AsyncChatMessageReceivedEvent(context, dispatcher)
         val res = event.callEvent()
-        if (res) handle(event.context)
+        if (res) return handle(event.context)
+        return null
     }
 }

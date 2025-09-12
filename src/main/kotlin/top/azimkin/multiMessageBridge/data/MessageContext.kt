@@ -1,17 +1,19 @@
 package top.azimkin.multiMessageBridge.data
 
 import java.awt.Color
-import java.io.File
 
 data class MessageContext(
     val senderName: String,
-    var message: String,
-    val isReply: Boolean,
     val platform: String,
-    var reply: String? = null,
+    val senderPlatformId: Long? = null,
+    var message: String? = null,
+    var messagePlatformId: Long? = null,
+    val sticker: String? = null,
+    var replyText: String? = null,
+    var replyId: Long? = null,
     var replyUser: String? = null,
-    var role: String? = null,
-    val attachedFiles: List<File> = listOf(),
-    val urlAttachments: List<String> = listOf(),
-    var roleColor: Color? = null
+    val role: String? = null,
+    val roleColor: Color? = null,
+    var images: List<String> = listOf(),
+    val attachment: Boolean = false,
 ) : BaseContext

@@ -6,7 +6,8 @@ import org.bukkit.event.HandlerList
 import top.azimkin.multiMessageBridge.data.MessageContext
 import top.azimkin.multiMessageBridge.platforms.MinecraftReceiver
 
-class MinecraftChatMessageReceivedEvent(val ctx: MessageContext, val receiver: MinecraftReceiver) : Event(), Cancellable {
+class MinecraftChatMessageReceivedEvent(val ctx: MessageContext, val receiver: MinecraftReceiver) : Event(),
+    Cancellable {
     private var cancelled = false
     override fun getHandlers(): HandlerList = handlerList
 

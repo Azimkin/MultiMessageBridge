@@ -6,7 +6,8 @@ import eu.okaeri.configs.annotation.Comment
 data class DiscordReceiverConfig(
     var bot: BotConfiguration = BotConfiguration(),
     var messages: MessageList = MessageList(customMessageType = "embed", customProperties = mapOf("color" to "0:0:0")),
-    var advanced: AdvancedConfiguration = AdvancedConfiguration()
+    var advanced: AdvancedConfiguration = AdvancedConfiguration(),
+    var phraseFilter: PhraseFilter = PhraseFilter(),
 ) : OkaeriConfig()
 
 data class BotConfiguration(
@@ -34,4 +35,13 @@ data class AdvancedConfiguration(
     @Comment("So you can specify place from where plugin will get JDA")
     @Comment("More info on wiki")
     var jdaProvider: String = "default",
+) : OkaeriConfig()
+
+data class PhraseFilter(
+    @Comment("This part allows you to configure replacements for phrases like @everyone, @here")
+    var filterMessages: Boolean = true,
+    var filters: Map<String, String> = mapOf(
+        "@everyone" to "[everyone]",
+        "@here" to "[here]",
+    )
 ) : OkaeriConfig()

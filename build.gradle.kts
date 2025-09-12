@@ -1,15 +1,14 @@
 import java.util.*
 
 plugins {
-    kotlin("jvm") version "1.9.10"
-    //kotlin("plugin.serialization") version "2.0.20"
-    id("com.github.johnrengelman.shadow") version "8.1.1"
+    kotlin("jvm") version "2.0.20"
+    id("com.gradleup.shadow") version "9.0.0-beta13"
     id("xyz.jpenilla.run-paper") version "2.3.1"
     id("maven-publish")
 }
 
 group = "top.azimkin"
-version = "0.4"
+version = "0.5"
 
 fun getVersionWithBuildNumber(): String {
     val buildFile = File("buildnumber.properties")
@@ -39,7 +38,10 @@ repositories {
         name = "codemc"
     }
     maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
-    maven("https://nexus.scarsz.me/content/repositories/releases/")
+    maven {
+        name = "fairkorReleases"
+        url = uri("https://repo.fairkor.pro/releases")
+    }
     maven("https://jitpack.io")
 
     maven("https://storehouse.okaeri.eu/repository/maven-public/")
@@ -49,18 +51,17 @@ dependencies {
     compileOnly("io.papermc.paper:paper-api:1.19.4-R0.1-SNAPSHOT")
     implementation("com.github.pengrad:java-telegram-bot-api:7.9.1")
     implementation("eu.okaeri:okaeri-configs-yaml-bukkit:5.0.5")
+    implementation("com.j256.ormlite:ormlite-jdbc:6.1")
 
     compileOnly("com.github.MilkBowl:VaultAPI:1.7.1")
     compileOnly("net.luckperms:api:5.4")
     compileOnly("me.clip:placeholderapi:2.11.6")
     compileOnly(fileTree("./libs") { include("*.jar") })
+    compileOnly("com.discord4j:discord4j-core:3.2.9")
+    implementation("me.scarsz.jdaappender:discord4j:1.2.4.3") {
+        exclude(group = "discord4j", module = "discord4j")
+    }
 
-    implementation("net.dv8tion:JDA:5.1.2") {
-        exclude(module = "opus-java")
-    }
-    implementation("me.scarsz.jdaappender:jda5:1.2.3") {
-        exclude(group = "net.dv8tion", module = "JDA")
-    }
 
     // tests
     testImplementation(kotlin("test"))
@@ -70,6 +71,10 @@ dependencies {
 val targetJavaVersion = 17
 kotlin {
     jvmToolchain(targetJavaVersion)
+}
+
+java {
+    withJavadocJar()
 }
 
 tasks {
@@ -86,27 +91,37 @@ tasks {
         }
     }
 
+    jar {
+        manifest {
+            attributes["paperweight-mappings-namespace"] = "mojang"
+        }
+    }
+
     shadowJar {
+        manifest {
+            attributes["paperweight-mappings-namespace"] = "mojang"
+        }
+
         exclude("kotlin/**")
-        exclude("org/intellij/**")
-        exclude("org/jetbrains/**")
-        exclude("org/slf4j/**")
-        exclude("javax/**")
-        exclude("com/google/gson/**")
+//
+//        exclude("org/**")
+//        exclude("javax/**")
+//        exclude("com/google/gson/**")
+//        exclude("discord4j/**")
+//        exclude("com/discord4j/**")
+//        exclude("com/github/**")
+//        exclude("com/fasterxml/**")
+//        exclude("com/austinv11/**")
+//        exclude("reactor/**")
+//        exclude("io/netty/**")
+//        exclude("google/**")
+//        exclude("META-INF/**")
+//
+        relocate("io.netty", "remap.netty")
     }
 
     test {
         useJUnitPlatform()
-    }
-
-    register("javadocJar", Jar::class.java) {
-        from(javadoc)
-        archiveClassifier.set("javadoc")
-    }
-
-    register("sourcesJar", Jar::class.java) {
-        from(sourceSets.main.get().allSource)
-        archiveClassifier.set("sources")
     }
 
     register("publishRelease") {
@@ -118,11 +133,11 @@ publishing {
     repositories {
         maven {
             if (gradle.startParameter.taskNames.contains("publishRelease")) {
-                name = "azimkinRepoReleases"
-                url = uri("https://repo.azimkin.top/releases")
+                name = "fairkorReleases"
+                url = uri("https://repo.fairkor.pro/releases")
             } else {
-                name = "azimkinRepoSnapshots"
-                url = uri("https://repo.azimkin.top/snapshots")
+                name = "fairkorSnapshots"
+                url = uri("https://repo.fairkor.pro/snapshots")
             }
             credentials(PasswordCredentials::class)
             authentication {
@@ -132,13 +147,11 @@ publishing {
     }
     publications {
         create<MavenPublication>("maven") {
-            groupId = project.group.toString()
             artifactId = "MultiMessageBridge"
             version =
                 if (gradle.startParameter.taskNames.contains("publishRelease")) project.version.toString() else getVersionWithBuildNumber()
             from(components["java"])
             artifact(tasks.kotlinSourcesJar)
-            artifact(tasks["javadocJar"])
         }
     }
 }

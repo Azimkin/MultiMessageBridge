@@ -2,14 +2,15 @@ package top.azimkin.multiMessageBridge.server
 
 import org.bukkit.Bukkit
 import top.azimkin.multiMessageBridge.MultiMessageBridge
+import java.util.concurrent.Callable
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 object ServerInfoProvider {
-    val replacements = hashMapOf<String, () -> String>(
-        "online" to { Bukkit.getOnlinePlayers().size.toString() },
-        "uptime" to { MultiMessageBridge.inst.dateFormatter.format(MultiMessageBridge.inst.uptime) },
-        "total" to { Bukkit.getOfflinePlayers().size.toString() },
+    val replacements = hashMapOf<String, Callable<String>>(
+        "online" to Callable { Bukkit.getOnlinePlayers().size.toString() },
+        "uptime" to Callable { MultiMessageBridge.inst.dateFormatter.format(MultiMessageBridge.inst.uptime) },
+        "total" to Callable { Bukkit.getOfflinePlayers().size.toString() },
     )
 
     fun parse(text: String?): String? {
@@ -22,7 +23,7 @@ object ServerInfoProvider {
         while (matcher.find()) {
             val key = matcher.group(1)
 
-            val replacement = replacements.getOrDefault(key) { matcher.group(0) }()
+            val replacement = replacements.getOrDefault(key) { matcher.group(0) }.call()
 
             matcher.appendReplacement(result, Matcher.quoteReplacement(replacement))
         }

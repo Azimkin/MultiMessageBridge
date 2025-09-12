@@ -17,13 +17,14 @@ class EssentialsChatHandler(val minecraftReceiver: MinecraftReceiver) : ChatHand
     @EventHandler(priority = EventPriority.HIGHEST)
     fun onMessage(event: GlobalChatEvent) {
         if (!event.isCancelled) {
-            onReceive(MessageContext(
-                event.player.name,
-                event.message,
-                false,
-                minecraftReceiver.name,
-                role = MultiMessageBridge.inst.metadataProvider.getPrefix(event.player)
-            ))
+            onReceive(
+                MessageContext(
+                    senderName = event.player.name,
+                    message = event.message,
+                    platform = minecraftReceiver.name,
+                    role = MultiMessageBridge.inst.metadataProvider.getPrefix(event.player)
+                )
+            )
         }
     }
 }

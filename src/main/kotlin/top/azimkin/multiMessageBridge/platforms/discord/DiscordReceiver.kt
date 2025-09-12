@@ -1,20 +1,26 @@
 package top.azimkin.multiMessageBridge.platforms.discord
 
+import discord4j.common.util.Snowflake
+import discord4j.core.GatewayDiscordClient
+import discord4j.core.event.domain.message.MessageCreateEvent
+import discord4j.core.`object`.entity.channel.GuildMessageChannel
+import discord4j.core.`object`.entity.channel.TextChannel
+import discord4j.core.spec.EmbedCreateFields.Author
+import discord4j.core.spec.EmbedCreateSpec
+import discord4j.core.spec.TextChannelEditSpec
 import me.scarsz.jdaappender.ChannelLoggingHandler
-import net.dv8tion.jda.api.EmbedBuilder
-import net.dv8tion.jda.api.JDA
-import net.dv8tion.jda.api.events.message.MessageReceivedEvent
+import reactor.core.publisher.Mono
 import top.azimkin.multiMessageBridge.MessagingEventManager
 import top.azimkin.multiMessageBridge.MultiMessageBridge
 import top.azimkin.multiMessageBridge.api.events.AsyncDiscordMessageEvent
-import top.azimkin.multiMessageBridge.api.events.JdaProviderRegistrationEvent
+import top.azimkin.multiMessageBridge.api.events.DiscordProviderRegistrationEvent
 import top.azimkin.multiMessageBridge.configuration.ChannelConfiguration
 import top.azimkin.multiMessageBridge.configuration.DiscordReceiverConfig
 import top.azimkin.multiMessageBridge.data.*
 import top.azimkin.multiMessageBridge.platforms.ConfigurableReceiver
-import top.azimkin.multiMessageBridge.platforms.discord.jdaproviders.CommonJdaProvider
-import top.azimkin.multiMessageBridge.platforms.discord.jdaproviders.JdaProvider
-import top.azimkin.multiMessageBridge.platforms.discord.jdaproviders.JdaProviderManager
+import top.azimkin.multiMessageBridge.platforms.discord.jdaproviders.CommonDiscordProvider
+import top.azimkin.multiMessageBridge.platforms.discord.jdaproviders.Discord4jProviderManager
+import top.azimkin.multiMessageBridge.platforms.discord.jdaproviders.DiscordProvider
 import top.azimkin.multiMessageBridge.platforms.dispatchers.ConsoleMessageDispatcher
 import top.azimkin.multiMessageBridge.platforms.dispatchers.MessageDispatcher
 import top.azimkin.multiMessageBridge.platforms.handlers.*
@@ -22,6 +28,7 @@ import top.azimkin.multiMessageBridge.server.ServerInfoProvider
 import top.azimkin.multiMessageBridge.utilities.formatByMap
 import top.azimkin.multiMessageBridge.utilities.parseColor
 import java.awt.Color
+import kotlin.jvm.optionals.getOrNull
 
 class DiscordReceiver(val em: MessagingEventManager) :
     ConfigurableReceiver<DiscordReceiverConfig>("Discord", DiscordReceiverConfig::class.java),
@@ -30,10 +37,11 @@ class DiscordReceiver(val em: MessagingEventManager) :
     private val executeQueue = ArrayDeque<() -> Unit>()
     private lateinit var console: ChannelLoggingHandler
 
-    val jda: JdaProvider = createJdaProvider().apply {
+    val client = createDiscordProvider().apply {
         logger.info("Using ${this.javaClass.simpleName} as jdaProvider")
-        addInitializeListener(this@DiscordReceiver::attachConsole)
-        addInitializeListener {
+        addListener(this@DiscordReceiver::attachConsole)
+        addListener { it.on(MessageCreateEvent::class.java).subscribe(this@DiscordReceiver::dispatchMessage) }
+        addListener {
             while (executeQueue.isNotEmpty()) {
                 executeQueue.removeFirst()()
             }
@@ -41,26 +49,38 @@ class DiscordReceiver(val em: MessagingEventManager) :
     }
 
     override fun onDisable() {
-        jda.shutdown()
-        jda.get().awaitShutdown()
+        client.shutdown()
         super.onDisable()
     }
 
-    override fun handle(context: MessageContext) {
+    override fun handle(context: MessageContext): Long? {
+        val sticker = config.messages.sticker.replace("<sticker_name>", (context.sticker ?: "null"))
+        val attachment = config.messages.attachment
         val base = getMessageOrBase(context.platform)
+
+        var text = (context.message ?: "")
+        var images = ""
+        for (img in context.images) {
+            images += "\n" + img
+        }
+        text += images
+
         val preparedMessage = base.formatByMap(
             mapOf(
                 "role" to (context.role ?: ""),
                 "nickname" to context.senderName,
                 "platform" to context.platform,
-                "message" to context.message,
-                "old_message" to (context.reply ?: ""),
-                "reply_user" to (context.replyUser ?: ""),
+                "message" to text,
+                "sticker" to (if (context.sticker != null) sticker else ""),
+                "attachment" to (if (context.attachment) attachment else "")
             )
         )
-        sendMessageToChannel(
-            preparedMessage.replace("@everyone", "евериване", true)
-                .replace("@here", "хере", true)
+        return sendMessageToChannel(
+            if (config.phraseFilter.filterMessages) run {
+                var msg = preparedMessage
+                config.phraseFilter.filters.forEach { (k, v) -> msg = msg.replace(k, v) } //TODO make it optimized
+                return@run msg
+            } else preparedMessage
         )
     }
 
@@ -79,8 +99,8 @@ class DiscordReceiver(val em: MessagingEventManager) :
     }
 
     override fun handle(context: SessionContext) {
-        var message = ""
-        var color: Color = Color.BLACK
+        var message: String
+        var color: Color
         if (context.isJoined) {
             if (context.isFirstJoined) {
                 val cfg = config.messages.firstJoin
@@ -121,51 +141,85 @@ class DiscordReceiver(val em: MessagingEventManager) :
     fun sendSimpleEmbed(author: String, message: String, color: Color = Color.BLACK, channel: String = "main_text") =
         addAction {
             val channel = findChannel(channel)?.id ?: return@addAction
-            val textChannel = jda.get().getTextChannelById(channel) ?: return@addAction
+            val textChannel = getChannelBlocking(channel) ?: return@addAction
             val headUrl = MultiMessageBridge.inst.headProvider.getHeadUrl(author)
-            textChannel.sendMessageEmbeds(
-                EmbedBuilder()
-                    .setAuthor(message, null, headUrl)
-                    .setColor(color)
-                    .build()
-            ).queue()
+            textChannel.createMessage(
+                EmbedCreateSpec.create()
+                    .withAuthor(Author.of(message, null, headUrl))
+                    .withColor(discord4j.rest.util.Color.of(color.red, color.green, color.blue))
+            ).subscribe()
         }
 
-    fun sendMessageToChannel(message: String, channel: String = "main_text") = addAction {
-        val channel = findChannel(channel)?.id ?: return@addAction
-        val textChannel = jda.get().getTextChannelById(channel) ?: return@addAction
-        textChannel
-            .sendMessage(message)
-            .queue()
+    fun sendMessageToChannel(message: String, channel: String = "main_text", replyId: Long? = null): Long? {
+        val channel = findChannel(channel)?.id ?: return null
+        val textChannel = getChannelBlocking(channel) ?: return null
+        var spec = textChannel.createMessage(message).withContent(message)
+        if (replyId != null) {
+            val id = Snowflake.of(replyId)
+            try {
+                spec = spec.withMessageReferenceId(id)
+            } catch (e: Throwable) {
+                e.printStackTrace()
+            }
+        }
+        val message = spec.block()
+        return message?.id?.asLong()
     }
 
-    fun dispatchMessage(event: MessageReceivedEvent) {
+    private fun getChannelBlocking(id: Long) = client.get().getChannelById(Snowflake.of(id))
+        .ofType(GuildMessageChannel::class.java)
+        .block()
+
+    fun dispatchMessage(event: MessageCreateEvent) {
         val bukkitEvent = AsyncDiscordMessageEvent(event, this)
         if (!bukkitEvent.callEvent()) return
-        if (event.author.isBot && bukkitEvent.mustBeCanceledIfBot) return
+        if (event.message.author.getOrNull()?.isBot == true && bukkitEvent.mustBeCanceledIfBot) return
         //MultiMessageBridge.inst.logger.info(event.toString())
-        val channelConfig = findChannel(id = event.channel.idLong) ?: return
+        val channelConfig = findChannel(id = event.message.channelId.asLong()) ?: return
+
+        val stickerItems = event.message.stickersItems
+        val sticker = if (stickerItems.isNotEmpty()) stickerItems.last().name else null
+
+        val images = event.message.attachments.filter {
+            it.contentType.isPresent && it.contentType.get().startsWith("image")
+        }.map { it.url }
+
+        var attachment = false
+        for (atchmnt in event.message.attachments) {
+            if (!(atchmnt.contentType.getOrNull()?.startsWith("image") ?: true)) {
+                attachment = true
+                break
+            }
+        }
+
         when (channelConfig.type) {
             "main_text" -> {
                 val context = MessageContext(
-                    event.member?.effectiveName ?: event.author.name,
-                    event.message.contentDisplay,
-                    event.message.referencedMessage != null,
-                    name,
-                    event.message.referencedMessage?.contentRaw,
-                    event.message.referencedMessage?.member?.effectiveName
-                        ?: event.message.referencedMessage?.author?.name,
-                    event.member?.roles?.getOrNull(0)?.name,
-                    roleColor = event.member?.roles?.getOrNull(0)?.color,
-                    urlAttachments = event.message.attachments.map { it.url },
+                    senderName = event.member.getOrNull()?.displayName ?: event.message.author.getOrNull()?.username
+                    ?: "unknown",
+                    senderPlatformId = event.member.getOrNull()?.id?.asLong(),
+                    message = event.message.content,
+                    messagePlatformId = event.message.id.asLong(),
+                    sticker = sticker,
+                    images = images,
+                    platform = name,
+                    replyId = event.message.referencedMessage.getOrNull()?.id?.asLong(),
+                    replyUser = event.message.referencedMessage.getOrNull()?.authorAsMember?.block()?.displayName
+                        ?: event.message.referencedMessage.getOrNull()?.author?.getOrNull()?.username ?: "unknown",
+                    role = event.member.getOrNull()?.highestRole?.map { it.name }
+                        ?.onErrorResume { _ -> Mono.just("Player") }
+                        ?.block(),
+                    roleColor = event.member.getOrNull()?.highestRole?.map { r -> r.color }?.blockOptional()
+                        ?.getOrNull()?.let { Color(it.red, it.green, it.blue) },
+                    attachment = attachment,
                 )
                 dispatch(context)
             }
 
             "console" -> {
-                console.dumpStack()
-                if (config.bot.commandsShouldStartsWithPrefix && !event.message.contentRaw.startsWith(config.bot.commandPrefix)) return
-                dispatch(ConsoleMessageContext(event.message.contentRaw.substring(config.bot.commandPrefix.length)))
+                //console.dumpStack()
+                if (config.bot.commandsShouldStartsWithPrefix && !event.message.content.startsWith(config.bot.commandPrefix)) return
+                dispatch(ConsoleMessageContext(event.message.content.substring(config.bot.commandPrefix.length)))
             }
         }
     }
@@ -175,23 +229,23 @@ class DiscordReceiver(val em: MessagingEventManager) :
             ?: config.messages.messageBase.format
 
     private fun addAction(act: () -> Unit) {
-        if (jda.isInitialized()) {
+        if (client.isInitialized()) {
             act()
         } else {
             executeQueue.add(act)
         }
     }
 
-    private fun createJdaProvider(): JdaProvider {
+    private fun createDiscordProvider(): DiscordProvider {
         val token = config.bot.token
-        val manager = JdaProviderManager().apply {
-            add("default") { token, receiver -> CommonJdaProvider(token, receiver) }
+        val manager = Discord4jProviderManager().apply {
+            add("default") { token, receiver -> CommonDiscordProvider(token, receiver) }
         }
-        JdaProviderRegistrationEvent(manager).callEvent()
+        DiscordProviderRegistrationEvent(manager).callEvent()
 
-        fun useCommon(error: String? = null): JdaProvider {
+        fun useCommon(error: String? = null): DiscordProvider {
             error?.let { MultiMessageBridge.inst.logger.warning("Using common provider as JDA provider | $it") }
-            return CommonJdaProvider(token, this)
+            return CommonDiscordProvider(token, this)
         }
 
         if (manager.providers.isEmpty()) {
@@ -199,18 +253,20 @@ class DiscordReceiver(val em: MessagingEventManager) :
         }
         val providerName = config.advanced.jdaProvider
 
-        return manager.providers[providerName]?.invoke(token, this) ?: useCommon("Unknown provider $providerName")
+        return manager.providers[providerName]?.apply(token, this) ?: useCommon("Unknown provider $providerName")
     }
 
-    private fun attachConsole(jda: JDA) {
+    private fun attachConsole(client: GatewayDiscordClient) {
         MultiMessageBridge.inst.logger.info("Attaching console appender")
         console =
-            ChannelLoggingHandler({ jda.getTextChannelById(findChannel("console")?.id ?: 0) }) { config ->
+            ChannelLoggingHandler(
+                client.getChannelById(Snowflake.of(findChannel("console")?.id ?: 0))
+                    .ofType(GuildMessageChannel::class.java)
+            ) { config ->
                 config.isColored = true
-                config.mapLoggerName("net.dv8tion.jda.api.JDA", "JDA")
-                config.mapLoggerName("net.dv8tion.jda", "JDA")
-                config.mapLoggerName("net.minecraft.top.azimkin.multiMessageBridge.server.MinecraftServer", "Server")
-                config.mapLoggerNameFriendly("net.minecraft.top.azimkin.multiMessageBridge.server") { s -> "Server/$s" }
+                config.mapLoggerName("net.minecraft.top.server.MinecraftServer", "Server")
+                config.mapLoggerName("discord4j", "Discord")
+                config.mapLoggerNameFriendly("net.minecraft.server") { s -> "Server/$s" }
                 config.mapLoggerNameFriendly("net.minecraft") { s -> "Minecraft/$s" }
             }.attachLog4jLogging().schedule()
         MultiMessageBridge.inst.logger.info("ConsoleAppender must be attached")
@@ -221,9 +277,16 @@ class DiscordReceiver(val em: MessagingEventManager) :
 
     override fun handle(context: ServerInfoContext) = addAction {
         for ((_, j) in config.bot.channels) {
-            jda.get().getTextChannelById(j.id)?.manager
-                ?.setTopic(ServerInfoProvider.parse(if (j.description == "") context.text else j.description))
-                ?.queue()
+            client.get().getChannelById(Snowflake.of(j.id))
+                .ofType(TextChannel::class.java)
+                .flatMap { c ->
+                    c.edit(
+                        TextChannelEditSpec.create()
+                            .withTopic(
+                                ServerInfoProvider.parse(if (j.description == "") context.text else j.description) ?: ""
+                            )
+                    )
+                }.subscribe()
         }
     }
 

@@ -21,7 +21,6 @@ object MainCommand : CommandExecutor, TabCompleter {
             CompletableFuture.runAsync {
                 try {
                     MultiMessageBridge.inst.reload()
-                    MultiMessageBridge.inst.messagingEventManager.reloadAll()
                     isSuccess = true
                 } catch (e: Exception) {
                     isSuccess = false
@@ -29,9 +28,9 @@ object MainCommand : CommandExecutor, TabCompleter {
                 }
             }.thenAccept {
                 if (isSuccess) {
-                    sender.sendMessage("Успешная перезагрузка плагина")
+                    sender.sendMessage("Plugin successfully reloaded!")
                 } else {
-                    sender.sendMessage("При выполнении перезагрузки плагина произошла непредвиденная ошибка!")
+                    sender.sendMessage("An error was occurred while reloading the plugin!")
                 }
             }
         }
