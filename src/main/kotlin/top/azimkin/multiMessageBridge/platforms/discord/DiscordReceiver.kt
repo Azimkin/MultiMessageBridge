@@ -77,8 +77,11 @@ class DiscordReceiver(val em: MessagingEventManager) :
             )
         )
         return sendMessageToChannel(
-            preparedMessage.replace("@everyone", "евериване", true)
-                .replace("@here", "хере", true, ), replyId=context.replyId
+            if (config.phraseFilter.filterMessages) run {
+                var msg = preparedMessage
+                config.phraseFilter.filters.forEach { (k, v) -> msg = msg.replace(k, v) } //TODO make it optimized
+                return@run msg
+            } else preparedMessage
         )
     }
 

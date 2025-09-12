@@ -73,6 +73,10 @@ kotlin {
     jvmToolchain(targetJavaVersion)
 }
 
+java {
+    withJavadocJar()
+}
+
 tasks {
     runServer {
         minecraftVersion("1.19.4")
@@ -87,7 +91,17 @@ tasks {
         }
     }
 
+    jar {
+        manifest {
+            attributes["paperweight-mappings-namespace"] = "mojang"
+        }
+    }
+
     shadowJar {
+        manifest {
+            attributes["paperweight-mappings-namespace"] = "mojang"
+        }
+
         exclude("kotlin/**")
 //
 //        exclude("org/**")
@@ -110,16 +124,6 @@ tasks {
         useJUnitPlatform()
     }
 
-    register("javadocJar", Jar::class.java) {
-        from(javadoc)
-        archiveClassifier.set("javadoc")
-    }
-
-    register("sourcesJar", Jar::class.java) {
-        from(sourceSets.main.get().allSource)
-        archiveClassifier.set("sources")
-    }
-
     register("publishRelease") {
         dependsOn("publish")
     }
@@ -129,11 +133,11 @@ publishing {
     repositories {
         maven {
             if (gradle.startParameter.taskNames.contains("publishRelease")) {
-                name = "azimkinRepoReleases"
-                url = uri("https://repo.azimkin.top/releases")
+                name = "fairkorReleases"
+                url = uri("https://repo.fairkor.pro/releases")
             } else {
-                name = "azimkinRepoSnapshots"
-                url = uri("https://repo.azimkin.top/snapshots")
+                name = "fairkorSnapshots"
+                url = uri("https://repo.fairkor.pro/snapshots")
             }
             credentials(PasswordCredentials::class)
             authentication {
@@ -143,13 +147,11 @@ publishing {
     }
     publications {
         create<MavenPublication>("maven") {
-            groupId = project.group.toString()
             artifactId = "MultiMessageBridge"
             version =
                 if (gradle.startParameter.taskNames.contains("publishRelease")) project.version.toString() else getVersionWithBuildNumber()
             from(components["java"])
             artifact(tasks.kotlinSourcesJar)
-            artifact(tasks["javadocJar"])
         }
     }
 }

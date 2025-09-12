@@ -4,8 +4,9 @@ import top.azimkin.multiMessageBridge.entities.CrossPlatformMessage
 import java.sql.SQLException
 import java.util.Date
 
-class MessageRepoImpl(private val dao: Dao<CrossPlatformMessage, Long>
-) : MessageRepo{
+class MessageRepoImpl(
+    private val dao: Dao<CrossPlatformMessage, Long>
+) : MessageRepo {
     override fun get(id: Long): CrossPlatformMessage? {
         return try {
             dao.queryBuilder().where().eq("id", id).queryForFirst()

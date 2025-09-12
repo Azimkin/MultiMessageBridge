@@ -11,7 +11,7 @@ import top.azimkin.multiMessageBridge.entities.MessagePlatformMapping
 import top.azimkin.multiMessageBridge.platforms.BaseReceiver
 import top.azimkin.multiMessageBridge.platforms.dispatchers.*
 import top.azimkin.multiMessageBridge.platforms.handlers.*
-import top.azimkin.multiMessageBridge.services.MessageService
+import top.azimkin.multiMessageBridge.services.message.MessageService
 import top.azimkin.multiMessageBridge.services.imagehosting.ImageHosting
 import top.azimkin.multiMessageBridge.providers.username.UsernameProvider
 import java.util.concurrent.CompletableFuture.runAsync
@@ -69,9 +69,10 @@ class MessagingEventManagerImpl(
         )!!
 
 
-        messageService.addPlatformMapping(handlingMessage,
+        messageService.addPlatformMapping(
+            handlingMessage,
             context.platform,
-            context.messagePlatformId!!,
+            context.messagePlatformId,
             context.message ?: ""
         )
 
@@ -89,7 +90,7 @@ class MessagingEventManagerImpl(
                     ?: receivers.find { it == handler }
                     ?: throw Exception("BaseReceiver not found")
 
-                MultiMessageBridge.inst.logger.info("${context.message}: ${receiver.name}")
+                //MultiMessageBridge.inst.logger.info("${context.message}: ${receiver.name}")
 
                 context.replyId = null
                 if (replyMessage != null && mappingCollection != null){

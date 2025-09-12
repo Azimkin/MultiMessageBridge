@@ -20,6 +20,11 @@ data class MinecraftReceiverConfig(
 
 // tiny copy of MessageList
 data class MinecraftMessageList(
+    @Comment("In 0.5 replies was introduced.")
+    @Comment("    Use <reply> tag to insert a reply part")
+    @Comment("    Use <sticker> tag to insert a sticker part")
+    @Comment("    Use <attachment> tag to insert an attachment part")
+    @Comment("If you use customFormats it also should be specified")
     var messageBase: String = "<platform> <reply><nickname> -> <message> <sticker><attachments>",
     var reply: String = "<blue><hover:show_text:'<user>: <reply_text>'>[Re. <user>]</hover></blue> ",
     var sticker: String = "<blue><hover:show_text:'<sticker_name>'>[sticker]</hover></blue> ",

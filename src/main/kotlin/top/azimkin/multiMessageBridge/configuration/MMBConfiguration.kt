@@ -16,6 +16,10 @@ import eu.okaeri.configs.annotation.Header
 data class MMBConfiguration(
     @Comment("Should plugin use bStats and publish metrics on https://bstats.org/plugin/bukkit/MultiMessageBridge/24055")
     var metrics: Boolean = true,
+    @Comment("If enabled every message from every platform will be stored in a local database")
+    @Comment("It allows plugin to correctly reply for messages on platforms")
+    @Comment("database.yml config will be created")
+    var enableMessageStorage: Boolean = false,
     @Comment("Image hosting configuration")
     var imageHosting: ImageHosting = ImageHosting(),
     @Comment("This part describes anything about heads?")
@@ -25,7 +29,7 @@ data class MMBConfiguration(
     @Comment("Time format used in server info under discord text channel")
     var timeFormat: String = "{d} days {h} hours {m} minutes",
     @Comment("time to update server info in seconds (10min its discord limit)")
-    var serverInfoUpdateTime: Int = 60 * 10,
+    var serverInfoUpdateTime: Int = 60 * 10 + 5,
     var defaultServerInfoFormat: String = "Players online: {online} Players total: {total} Uptime: {uptime}",
     @Comment("Should plugin translate death, advancement messages from default locale (English)")
     @Comment("Translations brings from the translations.json file in plugin root folder")
@@ -33,6 +37,15 @@ data class MMBConfiguration(
     var translateMessages: Boolean = false,
     @Comment("Should plugin copy messages from every receiver to console")
     var sendMessagesToConsole: Boolean = true,
+
+    var advanced: AdvancedConfig = AdvancedConfig(),
+) : OkaeriConfig()
+
+data class AdvancedConfig(
+    @Comment("You can specify what implementation of service you will use (implementations can be added via addons)")
+    var implementations: Map<String, String> = mapOf(
+        "username" to "default",
+    ),
 ) : OkaeriConfig()
 
 data class HeadsConfiguration(
@@ -52,8 +65,8 @@ data class MessageList(
     @Transient private val customProperties: Map<String, String> = emptyMap(),
     @Comment("Here you can configure how chat message will look on your platform if it sent from every other receiver")
     var messageBase: MessageConfiguration = MessageConfiguration("<platform> <nickname> -> <message> <sticker><attachment>"),
-    val sticker: String = "[sticker:<sticker_name>] ",
-    val attachment: String = "[attachment] ",
+    var sticker: String = "[sticker:<sticker_name>] ",
+    var attachment: String = "[attachment] ",
     @Comment("Also here you can configure how chat messages will look from any receiver in that format:")
     @Comment("    customFormats: # just a section name")
     @Comment("      PlatformName: # platform name, for example for discord is Discord")

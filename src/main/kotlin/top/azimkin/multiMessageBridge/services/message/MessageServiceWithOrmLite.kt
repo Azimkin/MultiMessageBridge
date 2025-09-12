@@ -1,20 +1,19 @@
-package top.azimkin.multiMessageBridge.services
+package top.azimkin.multiMessageBridge.services.message
 
 import top.azimkin.multiMessageBridge.entities.CrossPlatformMessage
 import top.azimkin.multiMessageBridge.entities.MessagePlatformMapping
 import top.azimkin.multiMessageBridge.entities.repo.MessageRepo
 import top.azimkin.multiMessageBridge.entities.repo.PlatformMappingRepo
 
-class MessageService(
+class MessageServiceWithOrmLite(
     private val messageRepo: MessageRepo,
     private val mappingRepo: PlatformMappingRepo
-) {
-
-    fun createNewMessage(
+) : MessageService {
+    override fun createNewMessage(
         authorUsername: String,
         text: String,
-        sticker: String? = null,
-        replyToId: Long? = null
+        sticker: String?,
+        replyToId: Long?
     ): CrossPlatformMessage? {
 
         val replyTo = replyToId?.let { messageRepo.get(it) }
@@ -29,7 +28,7 @@ class MessageService(
         return if (messageRepo.create(message)) message else null
     }
 
-    fun addPlatformMapping(
+    override fun addPlatformMapping(
         message: CrossPlatformMessage,
         platform: String,
         platformMessageId: Long?,
@@ -45,9 +44,9 @@ class MessageService(
         )
     }
 
-    fun findMessageByPlatformId(messageId: Long, platform: String) =
+    override fun findMessageByPlatformId(messageId: Long, platform: String) =
         mappingRepo.findByPlatformMessageId(platform, messageId)?.message
 
 
-    fun getMessage(id: Long) = messageRepo.get(id)
+    override fun getMessage(id: Long) = messageRepo.get(id)
 }

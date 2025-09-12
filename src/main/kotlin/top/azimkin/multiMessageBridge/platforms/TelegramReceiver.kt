@@ -47,9 +47,7 @@ class TelegramReceiver(val em: MessagingEventManager) : ConfigurableReceiver<Tel
                     MultiMessageBridge.inst.logger.warning("Unable to get updates from telegram API!\nErrors in period: $updateErrorsInPeriod")
             }
         } else {
-            logger.warn("Invalid telegram token provided!")
             throw RuntimeException("Invalid telegram token provided!")
-            em.disable(name)
         }
     }
 
@@ -105,6 +103,7 @@ class TelegramReceiver(val em: MessagingEventManager) : ConfigurableReceiver<Tel
             val mediaItems = images.map { url ->
                 InputMediaPhoto(url).apply {
                     if (images.indexOf(url) == 0) {
+                        showCaptionAboveMedia(true)
                         caption(text)
                     }
                 }

@@ -24,8 +24,8 @@ import top.azimkin.multiMessageBridge.utilities.*
 import java.awt.Color
 
 class MinecraftReceiver(val plugin: JavaPlugin) :
-    ConfigurableReceiver<MinecraftReceiverConfig>("Minecraft", MinecraftReceiverConfig::class.java), Listener,
-    MessageHandler, MessageDispatcher, PlayerLifeDispatcher, ServerSessionDispatcher, SessionDispatcher,
+    ConfigurableReceiver<MinecraftReceiverConfig>("Minecraft", MinecraftReceiverConfig::class.java),
+    Listener, MessageHandler, MessageDispatcher, PlayerLifeDispatcher, ServerSessionDispatcher, SessionDispatcher,
     AdvancementDispatcher {
     var chatHandler: ChatHandler; private set
 

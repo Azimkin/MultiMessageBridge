@@ -9,38 +9,17 @@ import org.slf4j.LoggerFactory
 import top.azimkin.multiMessageBridge.MultiMessageBridge
 import top.azimkin.multiMessageBridge.api.events.AsyncChatMessageDispatchedEvent
 import top.azimkin.multiMessageBridge.api.events.ChatHandlerRegistrationEvent
-import top.azimkin.multiMessageBridge.api.events.ReceiverRegistrationEvent
+import top.azimkin.multiMessageBridge.api.events.ImplementationsRegistrationEvent
 import top.azimkin.multiMessageBridge.handlers.chat.ChatExChatHandler
 import top.azimkin.multiMessageBridge.handlers.chat.EssentialsChatHandler
 import top.azimkin.multiMessageBridge.handlers.chat.NoPluginChatHandler
+import top.azimkin.multiMessageBridge.platforms.BaseReceiver
 import top.azimkin.multiMessageBridge.platforms.MinecraftReceiver
 import top.azimkin.multiMessageBridge.platforms.TelegramReceiver
 import top.azimkin.multiMessageBridge.platforms.discord.DiscordReceiver
 
 object CommonListener : Listener {
     private val logger = LoggerFactory.getLogger("MMB")
-    /*
-    // Just for test
-    @EventHandler
-    fun onMessageReceived(event: AsyncChatMessageReceivedEvent) {
-        //MultiMessageBridge.inst.logger.info(event.context.toString() + " " + event.dispatcher.toString())
-    }
-
-    // Just for test
-    @EventHandler
-    fun onMessageDispatched(event: AsyncChatMessageDispatchedEvent) {
-        //MultiMessageBridge.inst.logger.info(event.context.toString())
-
-    }*/
-
-    @EventHandler
-    fun onReceiverRegistration(event: ReceiverRegistrationEvent) {
-        event.eventManager.register(
-            "Minecraft" to { MinecraftReceiver(MultiMessageBridge.inst) },
-            "Discord" to { DiscordReceiver(event.eventManager) },
-            "Telegram" to { TelegramReceiver(event.eventManager) },
-        )
-    }
 
     @EventHandler(priority = EventPriority.HIGHEST)
     fun onChatHandlerRegistration(event: ChatHandlerRegistrationEvent) {
@@ -62,5 +41,14 @@ object CommonListener : Listener {
     @EventHandler
     fun onServerLoaded(event: ServerLoadEvent) {
         MultiMessageBridge.inst.setEnabled()
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    fun onImplementationRegistration(event: ImplementationsRegistrationEvent) {
+        val implementationRegistry = event.registry
+        val pl = MultiMessageBridge.inst
+        implementationRegistry.register("Minecraft", BaseReceiver::class.java) { MinecraftReceiver(pl) }
+        implementationRegistry.register("Telegram", BaseReceiver::class.java) { TelegramReceiver(pl.messagingEventManager) }
+        implementationRegistry.register("Discord", BaseReceiver::class.java) { DiscordReceiver(pl.messagingEventManager) }
     }
 }
