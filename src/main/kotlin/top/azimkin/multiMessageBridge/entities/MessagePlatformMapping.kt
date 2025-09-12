@@ -1,7 +1,8 @@
 package top.azimkin.multiMessageBridge.entities
+
 import com.j256.ormlite.field.DatabaseField
 import com.j256.ormlite.table.DatabaseTable
-import java.util.Date
+import java.util.*
 
 @DatabaseTable(tableName = "message_platform_mappings")
 data class MessagePlatformMapping(
@@ -22,4 +23,4 @@ data class MessagePlatformMapping(
 
     @DatabaseField(canBeNull = false)
     var timestamp: Date = Date()
-    )
+)

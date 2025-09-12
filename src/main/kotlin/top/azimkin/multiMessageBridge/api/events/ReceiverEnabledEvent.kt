@@ -5,7 +5,7 @@ import org.bukkit.event.HandlerList
 import top.azimkin.multiMessageBridge.platforms.BaseReceiver
 
 class ReceiverEnabledEvent(var receiver: BaseReceiver) : Event() {
-    override fun getHandlers(): HandlerList  = handlerList
+    override fun getHandlers(): HandlerList = handlerList
 
     companion object {
         @JvmStatic

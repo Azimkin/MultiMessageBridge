@@ -7,7 +7,6 @@ import discord4j.core.`object`.entity.channel.GuildMessageChannel
 import discord4j.core.`object`.entity.channel.TextChannel
 import discord4j.core.spec.EmbedCreateFields.Author
 import discord4j.core.spec.EmbedCreateSpec
-import discord4j.core.spec.MessageCreateSpec
 import discord4j.core.spec.TextChannelEditSpec
 import me.scarsz.jdaappender.ChannelLoggingHandler
 import reactor.core.publisher.Mono
@@ -61,7 +60,7 @@ class DiscordReceiver(val em: MessagingEventManager) :
 
         var text = (context.message ?: "")
         var images = ""
-        for(img in context.images){
+        for (img in context.images) {
             images += "\n" + img
         }
         text += images
@@ -100,8 +99,8 @@ class DiscordReceiver(val em: MessagingEventManager) :
     }
 
     override fun handle(context: SessionContext) {
-        var message = ""
-        var color: Color = Color.BLACK
+        var message: String
+        var color: Color
         if (context.isJoined) {
             if (context.isFirstJoined) {
                 val cfg = config.messages.firstJoin
@@ -151,15 +150,15 @@ class DiscordReceiver(val em: MessagingEventManager) :
             ).subscribe()
         }
 
-    fun sendMessageToChannel(message: String, channel: String = "main_text", replyId: Long? = null): Long?{
+    fun sendMessageToChannel(message: String, channel: String = "main_text", replyId: Long? = null): Long? {
         val channel = findChannel(channel)?.id ?: return null
         val textChannel = getChannelBlocking(channel) ?: return null
         var spec = textChannel.createMessage(message).withContent(message)
-        if(replyId != null) {
+        if (replyId != null) {
             val id = Snowflake.of(replyId)
             try {
                 spec = spec.withMessageReferenceId(id)
-            } catch (e: Throwable){
+            } catch (e: Throwable) {
                 e.printStackTrace()
             }
         }
@@ -179,15 +178,15 @@ class DiscordReceiver(val em: MessagingEventManager) :
         val channelConfig = findChannel(id = event.message.channelId.asLong()) ?: return
 
         val stickerItems = event.message.stickersItems
-        val sticker =  if (stickerItems.isNotEmpty()) stickerItems.last().name else null
+        val sticker = if (stickerItems.isNotEmpty()) stickerItems.last().name else null
 
-        val images = event.message.attachments.filter{
+        val images = event.message.attachments.filter {
             it.contentType.isPresent && it.contentType.get().startsWith("image")
-        }.map{it.url}
+        }.map { it.url }
 
         var attachment = false
-        for (atchmnt in event.message.attachments){
-            if (!(atchmnt.contentType.getOrNull()?.startsWith("image") ?: true)){
+        for (atchmnt in event.message.attachments) {
+            if (!(atchmnt.contentType.getOrNull()?.startsWith("image") ?: true)) {
                 attachment = true
                 break
             }
@@ -196,7 +195,8 @@ class DiscordReceiver(val em: MessagingEventManager) :
         when (channelConfig.type) {
             "main_text" -> {
                 val context = MessageContext(
-                    senderName = event.member.getOrNull()?.displayName ?: event.message.author.getOrNull()?.username ?: "unknown",
+                    senderName = event.member.getOrNull()?.displayName ?: event.message.author.getOrNull()?.username
+                    ?: "unknown",
                     senderPlatformId = event.member.getOrNull()?.id?.asLong(),
                     message = event.message.content,
                     messagePlatformId = event.message.id.asLong(),
@@ -206,7 +206,8 @@ class DiscordReceiver(val em: MessagingEventManager) :
                     replyId = event.message.referencedMessage.getOrNull()?.id?.asLong(),
                     replyUser = event.message.referencedMessage.getOrNull()?.authorAsMember?.block()?.displayName
                         ?: event.message.referencedMessage.getOrNull()?.author?.getOrNull()?.username ?: "unknown",
-                    role = event.member.getOrNull()?.highestRole?.map { it.name }?.onErrorResume { t -> Mono.just("Player") }
+                    role = event.member.getOrNull()?.highestRole?.map { it.name }
+                        ?.onErrorResume { _ -> Mono.just("Player") }
                         ?.block(),
                     roleColor = event.member.getOrNull()?.highestRole?.map { r -> r.color }?.blockOptional()
                         ?.getOrNull()?.let { Color(it.red, it.green, it.blue) },

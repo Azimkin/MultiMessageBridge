@@ -1,8 +1,8 @@
 package top.azimkin.multiMessageBridge.entities.repo
+
 import com.j256.ormlite.dao.Dao
 import top.azimkin.multiMessageBridge.entities.CrossPlatformMessage
-import java.sql.SQLException
-import java.util.Date
+import java.util.*
 
 class MessageRepoImpl(
     private val dao: Dao<CrossPlatformMessage, Long>
@@ -35,20 +35,20 @@ class MessageRepoImpl(
     }
 
     override fun delete(message: CrossPlatformMessage): Int {
-        return try{
+        return try {
             dao.delete(message)
-        } catch (e: Throwable){
+        } catch (e: Throwable) {
             e.printStackTrace()
             0
         }
     }
 
     override fun deleteUpTo(timestamp: Date): Boolean {
-        return try{
+        return try {
             val deleteBuilder = dao.deleteBuilder()
             deleteBuilder.where().lt("timestamp", timestamp)
             deleteBuilder.delete() == 1
-        } catch (e: Throwable){
+        } catch (e: Throwable) {
             e.printStackTrace()
             false
         }

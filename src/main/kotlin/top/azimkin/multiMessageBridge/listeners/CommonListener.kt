@@ -48,7 +48,13 @@ object CommonListener : Listener {
         val implementationRegistry = event.registry
         val pl = MultiMessageBridge.inst
         implementationRegistry.register("Minecraft", BaseReceiver::class.java) { MinecraftReceiver(pl) }
-        implementationRegistry.register("Telegram", BaseReceiver::class.java) { TelegramReceiver(pl.messagingEventManager) }
-        implementationRegistry.register("Discord", BaseReceiver::class.java) { DiscordReceiver(pl.messagingEventManager) }
+        implementationRegistry.register(
+            "Telegram",
+            BaseReceiver::class.java
+        ) { TelegramReceiver(pl.messagingEventManager) }
+        implementationRegistry.register(
+            "Discord",
+            BaseReceiver::class.java
+        ) { DiscordReceiver(pl.messagingEventManager) }
     }
 }

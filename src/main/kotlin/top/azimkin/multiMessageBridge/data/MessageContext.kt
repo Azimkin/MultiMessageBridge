@@ -1,8 +1,6 @@
 package top.azimkin.multiMessageBridge.data
 
 import java.awt.Color
-import java.io.File
-import java.util.Base64
 
 data class MessageContext(
     val senderName: String,

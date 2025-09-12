@@ -1,10 +1,10 @@
 package top.azimkin.multiMessageBridge.entities
+
 import com.j256.ormlite.dao.ForeignCollection
 import com.j256.ormlite.field.DatabaseField
 import com.j256.ormlite.field.ForeignCollectionField
 import com.j256.ormlite.table.DatabaseTable
-import com.pengrad.telegrambot.model.Message
-import java.util.Date
+import java.util.*
 
 @DatabaseTable(tableName = "messages")
 data class CrossPlatformMessage(

@@ -1,4 +1,5 @@
 package top.azimkin.multiMessageBridge.configuration
+
 import eu.okaeri.configs.OkaeriConfig
 import eu.okaeri.configs.annotation.Comment
 

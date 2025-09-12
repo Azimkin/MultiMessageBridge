@@ -11,9 +11,9 @@ import top.azimkin.multiMessageBridge.entities.MessagePlatformMapping
 import top.azimkin.multiMessageBridge.platforms.BaseReceiver
 import top.azimkin.multiMessageBridge.platforms.dispatchers.*
 import top.azimkin.multiMessageBridge.platforms.handlers.*
-import top.azimkin.multiMessageBridge.services.message.MessageService
-import top.azimkin.multiMessageBridge.services.imagehosting.ImageHosting
 import top.azimkin.multiMessageBridge.providers.username.UsernameProvider
+import top.azimkin.multiMessageBridge.services.imagehosting.ImageHosting
+import top.azimkin.multiMessageBridge.services.message.MessageService
 import java.util.concurrent.CompletableFuture.runAsync
 
 class MessagingEventManagerImpl(
@@ -37,9 +37,10 @@ class MessagingEventManagerImpl(
         val res = event.callEvent()
         if (!res) return@runAsync
 
-        if(context.message == null &&
+        if (context.message == null &&
             context.sticker == null &&
-            context.images.isEmpty())
+            context.images.isEmpty()
+        )
             return@runAsync
 
         val username = context.senderPlatformId?.let {
@@ -47,14 +48,14 @@ class MessagingEventManagerImpl(
         } ?: context.senderName
 
         var replyMessage: CrossPlatformMessage? = null
-        val replyToId = context.replyId?.let{
+        val replyToId = context.replyId?.let {
             replyMessage = messageService.findMessageByPlatformId(it, context.platform)
             replyMessage?.id
         }
 
         val imageUrls = mutableListOf<String>()
         for (imageData in context.images) {
-            imageHosting.uploadImage(imageData)?.let{
+            imageHosting.uploadImage(imageData)?.let {
                 imageUrls.add(it)
             }
         }
@@ -65,7 +66,7 @@ class MessagingEventManagerImpl(
             authorUsername = username,
             text = context.message ?: "",
             sticker = context.sticker,
-            replyToId=replyToId
+            replyToId = replyToId
         )!!
 
 
@@ -79,7 +80,7 @@ class MessagingEventManagerImpl(
         context.message = context.message ?: ""
 
         var mappingCollection: ForeignCollection<MessagePlatformMapping>? = null
-        if(replyMessage != null) {
+        if (replyMessage != null) {
             mappingCollection = replyMessage.mappings
             context.replyUser = replyMessage.authorUsername
             context.replyText = replyMessage.text
@@ -93,11 +94,11 @@ class MessagingEventManagerImpl(
                 //MultiMessageBridge.inst.logger.info("${context.message}: ${receiver.name}")
 
                 context.replyId = null
-                if (replyMessage != null && mappingCollection != null){
+                if (replyMessage != null && mappingCollection != null) {
                     for (item in mappingCollection) {
                         if (item.platform == receiver.name)
                             context.replyId = item.platformMessageId
-                        if (item.platform == "Minecraft"){
+                        if (item.platform == "Minecraft") {
                             context.replyText = item.platformMessageText
                         }
                     }
@@ -109,7 +110,8 @@ class MessagingEventManagerImpl(
                     handlingMessage,
                     receiver.name,
                     platformId,
-                    context.message ?: "")
+                    context.message ?: ""
+                )
 
             } catch (e: Exception) {
                 MultiMessageBridge.inst.logger.warning("Unable to send message context in ${handler.javaClass.name}")
@@ -218,7 +220,7 @@ class MessagingEventManagerImpl(
             return
         }
         logger.info("RegisteredReceivers: ")
-        var c = 1;
+        var c = 1
         for ((i, _) in registeredReceivers) {
             logger.info("${c++}. $i")
         }

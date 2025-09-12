@@ -9,37 +9,33 @@ import org.bukkit.scheduler.BukkitTask
 import top.azimkin.mmb.Metrics
 import top.azimkin.multiMessageBridge.api.events.ImplementationsRegistrationEvent
 import top.azimkin.multiMessageBridge.commands.MainCommand
-import top.azimkin.multiMessageBridge.configuration.MMBConfiguration
 import top.azimkin.multiMessageBridge.configuration.DatabaseConfig
+import top.azimkin.multiMessageBridge.configuration.MMBConfiguration
 import top.azimkin.multiMessageBridge.data.ServerInfoContext
 import top.azimkin.multiMessageBridge.data.ServerSessionContext
+import top.azimkin.multiMessageBridge.entities.repo.MessageRepoImpl
+import top.azimkin.multiMessageBridge.entities.repo.PlatformMappingRepoImpl
 import top.azimkin.multiMessageBridge.listeners.CommonListener
 import top.azimkin.multiMessageBridge.metadata.LuckPermsMetadataProvider
 import top.azimkin.multiMessageBridge.metadata.NoMetadataProvider
 import top.azimkin.multiMessageBridge.metadata.PlayerMetadataProvider
 import top.azimkin.multiMessageBridge.metadata.VaultMetadataProvider
+import top.azimkin.multiMessageBridge.platforms.BaseReceiver
 import top.azimkin.multiMessageBridge.platforms.MinecraftReceiver
-import top.azimkin.multiMessageBridge.providers.skins.HeadProviderManager
 import top.azimkin.multiMessageBridge.providers.skins.LinkHeadProvider
 import top.azimkin.multiMessageBridge.providers.skins.SkinHeadProvider
-import top.azimkin.multiMessageBridge.utilities.DateFormatter
-import top.azimkin.multiMessageBridge.utilities.Translator
-import top.azimkin.multiMessageBridge.utilities.runBukkitAsync
-import top.azimkin.multiMessageBridge.entities.repo.PlatformMappingRepoImpl
-import top.azimkin.multiMessageBridge.entities.repo.MessageRepoImpl
-import top.azimkin.multiMessageBridge.platforms.BaseReceiver
-import top.azimkin.multiMessageBridge.platforms.TelegramReceiver
-import top.azimkin.multiMessageBridge.platforms.discord.DiscordReceiver
-import top.azimkin.multiMessageBridge.services.MessageCleanupService
-import top.azimkin.multiMessageBridge.services.message.MessageService
-import top.azimkin.multiMessageBridge.services.database.DatabaseManager
-import top.azimkin.multiMessageBridge.services.database.DatabaseManagerFactory
-import top.azimkin.multiMessageBridge.services.imagehosting.ImageHosting
 import top.azimkin.multiMessageBridge.providers.username.UsernameProvider
 import top.azimkin.multiMessageBridge.providers.username.UsernameProviderImpl
+import top.azimkin.multiMessageBridge.services.MessageCleanupService
+import top.azimkin.multiMessageBridge.services.database.DatabaseManager
+import top.azimkin.multiMessageBridge.services.database.DatabaseManagerFactory
 import top.azimkin.multiMessageBridge.services.imagehosting.FreeImageHosting
+import top.azimkin.multiMessageBridge.services.imagehosting.ImageHosting
 import top.azimkin.multiMessageBridge.services.message.BlankMessageService
+import top.azimkin.multiMessageBridge.services.message.MessageService
 import top.azimkin.multiMessageBridge.services.message.MessageServiceWithOrmLite
+import top.azimkin.multiMessageBridge.utilities.DateFormatter
+import top.azimkin.multiMessageBridge.utilities.Translator
 import top.azimkin.multiMessageBridge.utilities.runSync
 import java.io.File
 
@@ -103,7 +99,10 @@ class MultiMessageBridge : JavaPlugin() {
         }
 
         implementationRegistry = ImplementationRegistryImpl()
-        implementationRegistry.register("default", SkinHeadProvider::class.java) { LinkHeadProvider(pluginConfig.heads.url) }
+        implementationRegistry.register(
+            "default",
+            SkinHeadProvider::class.java
+        ) { LinkHeadProvider(pluginConfig.heads.url) }
         implementationRegistry.register("default", UsernameProvider::class.java) { UsernameProviderImpl() }
         runSync {
             ImplementationsRegistrationEvent(implementationRegistry).callEvent()
@@ -112,13 +111,16 @@ class MultiMessageBridge : JavaPlugin() {
                 .getImplementation(SkinHeadProvider::class.java, pluginConfig.heads.provider)
                 ?: LinkHeadProvider(pluginConfig.heads.url)
             usernameProvider = implementationRegistry
-                .getImplementation(UsernameProvider::class.java, pluginConfig.advanced.implementations["username"] ?: "default")
+                .getImplementation(
+                    UsernameProvider::class.java,
+                    pluginConfig.advanced.implementations["username"] ?: "default"
+                )
                 ?: UsernameProviderImpl()
             imageHosting = implementationRegistry
                 .getImplementation(ImageHosting::class.java, pluginConfig.imageHosting.type)
                 ?: FreeImageHosting()
 
-            messagingEventManager = MessagingEventManagerImpl(messageService, usernameProvider, imageHosting);
+            messagingEventManager = MessagingEventManagerImpl(messageService, usernameProvider, imageHosting)
 
             val receivers = implementationRegistry.getImplementations(BaseReceiver::class.java)
             messagingEventManager.register(*receivers.entries.map { e -> e.key to e.value }.toTypedArray())
@@ -191,6 +193,7 @@ class MultiMessageBridge : JavaPlugin() {
     fun doIfInitialized(action: () -> Unit) {
         try {
             action()
-        } catch (_: Throwable) {}
+        } catch (_: Throwable) {
+        }
     }
 }

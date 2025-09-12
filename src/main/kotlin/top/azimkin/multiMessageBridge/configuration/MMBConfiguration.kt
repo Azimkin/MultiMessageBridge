@@ -108,5 +108,5 @@ data class MessageConfiguration(
 
 data class ImageHosting(
     @Comment("Image Hosting to use: freeimage")
-    var type : String = "freeimage",
+    var type: String = "freeimage",
 ) : OkaeriConfig()

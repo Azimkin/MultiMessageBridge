@@ -4,7 +4,6 @@ import com.pengrad.telegrambot.Callback
 import com.pengrad.telegrambot.TelegramBot
 import com.pengrad.telegrambot.UpdatesListener
 import com.pengrad.telegrambot.model.Update
-import com.pengrad.telegrambot.model.request.InputMedia
 import com.pengrad.telegrambot.model.request.InputMediaPhoto
 import com.pengrad.telegrambot.request.GetFile
 import com.pengrad.telegrambot.request.SendMediaGroup
@@ -22,11 +21,12 @@ import top.azimkin.multiMessageBridge.platforms.dispatchers.MessageDispatcher
 import top.azimkin.multiMessageBridge.platforms.handlers.*
 import top.azimkin.multiMessageBridge.utilities.formatByMap
 import java.io.IOException
-import java.util.Base64
+import java.util.*
 import java.util.concurrent.CountDownLatch
 import java.util.regex.Pattern
 
-class TelegramReceiver(val em: MessagingEventManager) : ConfigurableReceiver<TelegramReceiverConfig>("Telegram", TelegramReceiverConfig::class.java),
+class TelegramReceiver(val em: MessagingEventManager) :
+    ConfigurableReceiver<TelegramReceiverConfig>("Telegram", TelegramReceiverConfig::class.java),
     MessageHandler, AdvancementHandler,
     MessageDispatcher, PlayerLifeHandler, SessionHandler, ServerSessionHandler {
     val token = config.bot.token
@@ -210,18 +210,19 @@ class TelegramReceiver(val em: MessagingEventManager) : ConfigurableReceiver<Tel
             if (config.bot.mainThread < 0 || (update.message()?.messageThreadId() == config.bot.mainThread)) {
                 val imageBytes = getPhotoAsBase64(update)
 
-                val images = imageBytes?.let{listOf(it)} ?: listOf()
+                val images = imageBytes?.let { listOf(it) } ?: listOf()
 
                 val attachments = update.message().video() != null
                         || update.message().audio() != null
                         || update.message().document() != null
                         || update.message().animation() != null  // gifs???
                 var text = update.message().text()
-                if(update.message().photo()?.isNotEmpty() ?: false)
+                if (update.message().photo()?.isNotEmpty() ?: false)
                     text = update.message().caption()
                 dispatch(
                     MessageContext(
-                        senderName = update.message().from().username() ?: update.message().from().firstName() ?: "Anonymous",
+                        senderName = update.message().from().username() ?: update.message().from().firstName()
+                        ?: "Anonymous",
                         senderPlatformId = update.message().from().id(),
                         message = text,
                         messagePlatformId = update.message().messageId().toLong(),
@@ -247,11 +248,11 @@ class TelegramReceiver(val em: MessagingEventManager) : ConfigurableReceiver<Tel
 
             if (getFileResponse.isOk && getFileResponse.file() != null) {
                 val file = getFileResponse.file()!!
-                if(file.fileSize() >= 64 * 1024 * 1024){
+                if (file.fileSize() >= 64 * 1024 * 1024) {
                     throw Exception("Image file is too big!")  // TODO handle
                 }
 
-                val fileUrl = bot.getFullFilePath(file);
+                val fileUrl = bot.getFullFilePath(file)
 
                 val request = Request.Builder().url(fileUrl).build()
                 val httpClient = OkHttpClient()
@@ -286,7 +287,6 @@ class TelegramReceiver(val em: MessagingEventManager) : ConfigurableReceiver<Tel
     }
 
     companion object {
-        private const val MAX_FILE_SIZE = 25_000_000
         private val TOKEN_PATTERN = Pattern.compile("""^\d{9,10}:[A-Za-z0-9_-]{35}$""")
     }
 }

@@ -4,8 +4,8 @@ import org.bukkit.plugin.Plugin
 import top.azimkin.multiMessageBridge.configuration.DatabaseConfig
 import top.azimkin.multiMessageBridge.entities.repo.MessageRepo
 import top.azimkin.multiMessageBridge.entities.repo.PlatformMappingRepo
+import java.util.*
 import java.util.concurrent.TimeUnit
-import java.util.Date
 
 class MessageCleanupService(
     private val plugin: Plugin,
@@ -17,14 +17,15 @@ class MessageCleanupService(
         if (config.cleanup.intervalMinutes <= 0)
             return
 
-        val cutoffDate = Date(System.currentTimeMillis() - TimeUnit.HOURS.toMillis(config.cleanup.olderThanHours.toLong()))
-        
+        val cutoffDate =
+            Date(System.currentTimeMillis() - TimeUnit.HOURS.toMillis(config.cleanup.olderThanHours.toLong()))
+
         messageRepo.deleteUpTo(cutoffDate)
         mappingRepo.deleteUpTo(cutoffDate)
     }
 
     fun scheduleCleanupTask() {
-        if (config.cleanup.intervalMinutes <= 0) 
+        if (config.cleanup.intervalMinutes <= 0)
             return
 
         val intervalTicks = config.cleanup.intervalMinutes * 60 * 20L

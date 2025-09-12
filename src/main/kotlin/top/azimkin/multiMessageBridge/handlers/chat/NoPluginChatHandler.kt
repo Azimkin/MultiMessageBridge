@@ -18,13 +18,15 @@ class NoPluginChatHandler(val minecraftReceiver: MinecraftReceiver) : ChatHandle
     @EventHandler(priority = EventPriority.HIGHEST)
     fun onMinecraftMessage(event: AsyncChatEvent) {
         if (event.isCancelled) return
-        onReceive(MessageContext(
-            senderName = event.player.name,
-            message = event.message().toPlainText(),
-            platform = minecraftReceiver.name,
-            replyId = null,
-            replyText = null,
-            replyUser = MultiMessageBridge.inst.metadataProvider.getPrefix(event.player)
-        ))
+        onReceive(
+            MessageContext(
+                senderName = event.player.name,
+                message = event.message().toPlainText(),
+                platform = minecraftReceiver.name,
+                replyId = null,
+                replyText = null,
+                replyUser = MultiMessageBridge.inst.metadataProvider.getPrefix(event.player)
+            )
+        )
     }
 }

@@ -38,7 +38,14 @@ class MinecraftReceiver(val plugin: JavaPlugin) :
             NoPluginChatHandler(this)
         }).apply {
             addListener(this@MinecraftReceiver::dispatch)
-            addListener { ctx -> runSync { MinecraftChatMessageReceivedEvent(ctx, this@MinecraftReceiver).callEvent() } }
+            addListener { ctx ->
+                runSync {
+                    MinecraftChatMessageReceivedEvent(
+                        ctx,
+                        this@MinecraftReceiver
+                    ).callEvent()
+                }
+            }
         }
         logger.info("Using ${chatHandler.javaClass.simpleName} as chat handler!")
     }
@@ -49,15 +56,19 @@ class MinecraftReceiver(val plugin: JavaPlugin) :
         var message = context.message ?: ""
 
         var images = ""
-        for(img in context.images){
+        for (img in context.images) {
             images = images + config.messages.attachment.replace("<url>", img) + " "
         }
 
-        val sticker = config.messages.sticker.replace("<sticker_name>",
-            context.sticker ?: "null")
+        val sticker = config.messages.sticker.replace(
+            "<sticker_name>",
+            context.sticker ?: "null"
+        )
 
-        message = message.replace(Regex("(https?://[^ ]+)"),
-            config.messages.link.replace("<url>", "$1"))
+        message = message.replace(
+            Regex("(https?://[^ ]+)"),
+            config.messages.link.replace("<url>", "$1")
+        )
         val formattedMessage = deserialize(
             baseMessage,
             mapOf(
@@ -73,11 +84,13 @@ class MinecraftReceiver(val plugin: JavaPlugin) :
             )
         )
 
-        context.message = "<message><sticker><attachments>".formatByMap(mapOf(
-            "message" to message,
-            "sticker" to (if (context.sticker != null) sticker else ""),
-            "attachments" to images
-        ))
+        context.message = "<message><sticker><attachments>".formatByMap(
+            mapOf(
+                "message" to message,
+                "sticker" to (if (context.sticker != null) sticker else ""),
+                "attachments" to images
+            )
+        )
 
         runSync {
             for (player in Bukkit.getOnlinePlayers()) {

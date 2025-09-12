@@ -9,7 +9,8 @@ data class MinecraftReceiverConfig(
     var dispatchAdvancements: Boolean = false,
     @Comment("If enabled will filter advancements by rarity")
     var filterAdvancements: Boolean = true,
-    private var enabledAdvancementRarity: List<String> = AdvancementDisplay.Frame.entries.filter { it.name != "TASK" }.map { it.name },
+    private var enabledAdvancementRarity: List<String> = AdvancementDisplay.Frame.entries.filter { it.name != "TASK" }
+        .map { it.name },
     var messages: MinecraftMessageList = MinecraftMessageList(),
     var chatHandlerConfiguration: Map<String, String> = emptyMap()
 ) : OkaeriConfig() {
