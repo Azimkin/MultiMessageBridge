@@ -76,11 +76,12 @@ class DiscordReceiver(val em: MessagingEventManager) :
             )
         )
         return sendMessageToChannel(
-            if (config.phraseFilter.filterMessages) run {
+            message = if (config.phraseFilter.filterMessages) run {
                 var msg = preparedMessage
                 config.phraseFilter.filters.forEach { (k, v) -> msg = msg.replace(k, v) } //TODO make it optimized
                 return@run msg
-            } else preparedMessage
+            } else preparedMessage,
+            replyId = context.replyId,
         )
     }
 

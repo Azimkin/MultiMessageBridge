@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "top.azimkin"
-version = "0.5"
+version = "0.5.1"
 
 fun getVersionWithBuildNumber(): String {
     val buildFile = File("buildnumber.properties")
