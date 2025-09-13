@@ -5,7 +5,7 @@ import org.bukkit.event.HandlerList
 import top.azimkin.multiMessageBridge.platforms.discord.jdaproviders.Discord4jProviderManager
 
 class DiscordProviderRegistrationEvent(
-    val jdaProviderManager: Discord4jProviderManager,
+    val manager: Discord4jProviderManager,
 ) : Event() {
     override fun getHandlers(): HandlerList = handlerList
 

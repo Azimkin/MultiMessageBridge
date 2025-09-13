@@ -104,7 +104,8 @@ class MultiMessageBridge : JavaPlugin() {
             SkinHeadProvider::class.java
         ) { LinkHeadProvider(pluginConfig.heads.url) }
         implementationRegistry.register("default", UsernameProvider::class.java) { UsernameProviderImpl() }
-        runSync {
+
+        val action = {
             ImplementationsRegistrationEvent(implementationRegistry).callEvent()
 
             headProvider = implementationRegistry
@@ -136,6 +137,8 @@ class MultiMessageBridge : JavaPlugin() {
                 pluginConfig.serverInfoUpdateTime.toLong() * 20
             )
         }
+        if (Bukkit.isPrimaryThread()) action()
+        else runSync(action)
     }
 
     fun initDatabase() {
