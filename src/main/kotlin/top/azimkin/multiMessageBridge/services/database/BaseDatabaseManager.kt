@@ -48,6 +48,8 @@ abstract class BaseDatabaseManager(
             TableUtils.createTableIfNotExists(connectionSource, MessagePlatformMapping::class.java)
             plugin.logger.info("Database tables created/verified successfully")
         } catch (e: SQLException) {
+            if (e.cause?.message?.contains("Duplicate key") == true)
+                return
             plugin.logger.severe("Failed to create database tables: ${e.message}")
             throw e
         }

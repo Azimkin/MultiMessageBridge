@@ -23,7 +23,8 @@ class MySQLDatabaseManager(
     override fun init() {
         try {
             val jdbcUrl = buildJdbcUrl()
-            connectionSource = JdbcConnectionSource(jdbcUrl, MysqlDatabaseType())
+            connectionSource = JdbcConnectionSource(jdbcUrl, config.username, config.password,
+                MysqlDatabaseType())
 
             createTables()
             initializeDaos()
@@ -39,7 +40,8 @@ class MySQLDatabaseManager(
         val params = mutableMapOf(
             "useSSL" to config.useSSL.toString(),
             "serverTimezone" to "UTC",
-            "characterEncoding" to "UTF-8"
+            "characterEncoding" to "UTF-8",
+            "allowPublicKeyRetrieval" to "true"
         )
 
         params.putAll(config.connectionParams)
