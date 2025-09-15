@@ -17,6 +17,7 @@ import top.azimkin.multiMessageBridge.platforms.BaseReceiver
 import top.azimkin.multiMessageBridge.platforms.MinecraftReceiver
 import top.azimkin.multiMessageBridge.platforms.TelegramReceiver
 import top.azimkin.multiMessageBridge.platforms.discord.DiscordReceiver
+import java.util.function.Supplier
 
 object CommonListener : Listener {
     private val logger = LoggerFactory.getLogger("MMB")

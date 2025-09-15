@@ -124,7 +124,7 @@ class MultiMessageBridge : JavaPlugin() {
             messagingEventManager = MessagingEventManagerImpl(messageService, usernameProvider, imageHosting)
 
             val receivers = implementationRegistry.getImplementations(BaseReceiver::class.java)
-            messagingEventManager.register(*receivers.entries.map { e -> e.key to e.value }.toTypedArray())
+            messagingEventManager.register(*receivers.entries.map { e -> e.key to { e.value.get() } }.toTypedArray())
             messagingEventManager.enable(pluginConfig.enabledReceivers)
 
             setupMetadataProvider()
