@@ -53,7 +53,10 @@ class MinecraftReceiver(val plugin: JavaPlugin) :
 
     override fun handle(context: MessageContext): Long? {
         val baseMessage = getMessageOrBase(context.platform)
-        var message = context.message ?: ""
+        var message = ""
+        if (context.message != null){
+            message = context.message + " "
+        }
 
         var images = ""
         for (img in context.images) {
