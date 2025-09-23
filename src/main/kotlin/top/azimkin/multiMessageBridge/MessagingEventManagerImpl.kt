@@ -43,7 +43,7 @@ class MessagingEventManagerImpl(
         )
             return@runAsync
 
-        val username = context.senderPlatformId?.let {
+        context.senderName = context.senderPlatformId?.let {
             usernameProvider.getUsername(it, context.platform)
         } ?: context.senderName
 
@@ -63,7 +63,7 @@ class MessagingEventManagerImpl(
         context.images = imageUrls
 
         val handlingMessage = messageService.createNewMessage(
-            authorUsername = username,
+            authorUsername = context.senderName,
             text = context.message ?: "",
             sticker = context.sticker,
             replyToId = replyToId

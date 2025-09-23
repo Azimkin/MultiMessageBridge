@@ -3,7 +3,7 @@ package top.azimkin.multiMessageBridge.data
 import java.awt.Color
 
 data class MessageContext(
-    val senderName: String,
+    var senderName: String,
     val platform: String,
     val senderPlatformId: Long? = null,
     var message: String? = null,
