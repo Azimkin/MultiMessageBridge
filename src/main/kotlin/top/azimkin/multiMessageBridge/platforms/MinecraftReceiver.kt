@@ -57,7 +57,7 @@ class MinecraftReceiver(val plugin: JavaPlugin) :
 
         var images = ""
         for (img in context.images) {
-            images = images + config.messages.attachment.replace("<url>", img) + " "
+            images = images + config.messages.attachments.replace("<url>", img) + " "
         }
 
         val sticker = config.messages.sticker.replace(

@@ -24,12 +24,12 @@ data class MinecraftMessageList(
     @Comment("In 0.5 replies was introduced.")
     @Comment("    Use <reply> tag to insert a reply part")
     @Comment("    Use <sticker> tag to insert a sticker part")
-    @Comment("    Use <attachment> tag to insert an attachment part")
+    @Comment("    Use <attachments> tag to insert an attachment part")
     @Comment("If you use customFormats it also should be specified")
     var messageBase: String = "<platform> <reply><nickname> -> <message> <sticker><attachments>",
     var reply: String = "<blue><hover:show_text:'<user>: <reply_text>'>[Re. <user>]</hover></blue> ",
     var sticker: String = "<blue><hover:show_text:'<sticker_name>'>[sticker]</hover></blue> ",
-    var attachment: String = "<blue><hover:show_text:'Open image: <url>'><click:open_url:'<url>'>[attachment]</click></hover></blue> ",
+    var attachments: String = "<blue><hover:show_text:'Open image: <url>'><click:open_url:'<url>'>[attachment]</click></hover></blue> ",
     var link: String = "<blue><hover:show_text:'Open link: <url>'><click:open_url:'<url>'>[link]</click></hover></blue>",
     var customFormats: Map<String, String> = emptyMap(),
 ) : OkaeriConfig()
