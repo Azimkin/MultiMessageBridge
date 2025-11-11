@@ -3,11 +3,14 @@ package top.azimkin.multiMessageBridge.platforms.discord
 import discord4j.common.util.Snowflake
 import discord4j.core.GatewayDiscordClient
 import discord4j.core.event.domain.message.MessageCreateEvent
+import discord4j.core.`object`.entity.Member
 import discord4j.core.`object`.entity.channel.GuildMessageChannel
 import discord4j.core.`object`.entity.channel.TextChannel
+import discord4j.core.`object`.reaction.ReactionEmoji
 import discord4j.core.spec.EmbedCreateFields.Author
 import discord4j.core.spec.EmbedCreateSpec
 import discord4j.core.spec.TextChannelEditSpec
+import discord4j.rest.util.Permission
 import me.scarsz.jdaappender.ChannelLoggingHandler
 import reactor.core.publisher.Mono
 import top.azimkin.multiMessageBridge.MessagingEventManager
@@ -15,6 +18,7 @@ import top.azimkin.multiMessageBridge.MultiMessageBridge
 import top.azimkin.multiMessageBridge.api.events.AsyncDiscordMessageEvent
 import top.azimkin.multiMessageBridge.api.events.DiscordProviderRegistrationEvent
 import top.azimkin.multiMessageBridge.configuration.ChannelConfiguration
+import top.azimkin.multiMessageBridge.configuration.CommandPermission
 import top.azimkin.multiMessageBridge.configuration.DiscordReceiverConfig
 import top.azimkin.multiMessageBridge.data.*
 import top.azimkin.multiMessageBridge.platforms.ConfigurableReceiver
@@ -219,10 +223,53 @@ class DiscordReceiver(val em: MessagingEventManager) :
 
             "console" -> {
                 //console.dumpStack()
-                if (config.bot.commandsShouldStartsWithPrefix && !event.message.content.startsWith(config.bot.commandPrefix)) return
-                dispatch(ConsoleMessageContext(event.message.content.substring(config.bot.commandPrefix.length)))
+                if (config.console.commandsShouldStartsWithPrefix && !event.message.content.startsWith(config.console.commandPrefix)) return
+                val author = event.message.authorAsMember.block() ?: return
+                val command = event.message.content.substring(config.console.commandPrefix.length)
+                val res = isUserAllowedToSendCommand(command, author)
+                if (res) dispatch(ConsoleMessageContext(command))
+                if (config.console.reactOnCommandWithSendResult)
+                    event.message.addReaction(ReactionEmoji.unicode(if (res) "✅" else "❌")).subscribe()
             }
         }
+    }
+
+    private fun isUserAllowedToSendCommand(command: String, author: Member): Boolean {
+        val permissions = author.basePermissions.block() ?: return false
+        if (permissions.contains(Permission.ADMINISTRATOR)) return true
+
+        val roles = author.roles
+            .map { r -> r.name to r.id.asLong() }
+            .collectList()
+            .block() ?: return false
+        val found = mutableListOf<CommandPermission>()
+        for (permission in config.console.permissions) {
+            for (role in roles) {
+                if (role.first == permission.roleName || role.second == permission.roleId) found += permission
+            }
+        }
+        if (found.isEmpty()) return false
+        var allowed = false
+        for (permission in found) {
+            if (permission.allowAllCommands) {
+                var contains = false;
+                for (c in permission.blockedCommands) {
+                    if (command.startsWith(c)) {
+                        contains = true
+                    }
+                }
+                allowed = !contains
+            } else {
+                for (c in permission.allowedCommands) {
+                    if (command.startsWith(c)) {
+                        allowed = true
+                        break
+                    }
+                }
+            }
+            if (allowed) break
+        }
+        return allowed
     }
 
     private fun getMessageOrBase(platform: String): String =
