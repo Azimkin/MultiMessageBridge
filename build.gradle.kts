@@ -137,6 +137,28 @@ publishing {
                 if (isReleaseBuild()) project.version.toString() else getVersionWithBuildNumber()
             from(components["java"])
             artifact(tasks.kotlinSourcesJar)
+            pom {
+                name.set("MultiMessageBridge")
+                description.set("Cross-platform chat bridge for Minecraft, Discord and Telegram")
+                url.set("https://github.com/Azimkin/MultiMessageBridge")
+                licenses {
+                    license {
+                        name.set("MIT License")
+                        url.set("https://github.com/Azimkin/MultiMessageBridge/blob/main/LICENSE")
+                    }
+                }
+                developers {
+                    developer {
+                        id.set("azimkin")
+                        name.set("Azimkin")
+                    }
+                }
+                scm {
+                    url.set("https://github.com/Azimkin/MultiMessageBridge")
+                    connection.set("scm:git:git://github.com/Azimkin/MultiMessageBridge.git")
+                    developerConnection.set("scm:git:ssh://github.com/Azimkin/MultiMessageBridge.git")
+                }
+            }
         }
     }
 }
