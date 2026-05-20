@@ -110,19 +110,20 @@ tasks {
     }
 }
 
+fun isReleaseBuild(): Boolean =
+    gradle.startParameter.taskNames.contains("publishRelease") ||
+        project.findProperty("release") == "true"
+
 publishing {
     repositories {
         maven {
-            if (gradle.startParameter.taskNames.contains("publishRelease")) {
-                name = "fairkorReleases"
-                url = uri("https://repo.fairkor.pro/releases")
-            } else {
-                name = "fairkorSnapshots"
-                url = uri("https://repo.fairkor.pro/snapshots")
-            }
-            credentials(PasswordCredentials::class)
-            authentication {
-                create<BasicAuthentication>("basic")
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/Azimkin/MultiMessageBridge")
+            credentials {
+                username = System.getenv("GITHUB_ACTOR")
+                    ?: project.findProperty("gpr.user") as String?
+                password = System.getenv("GITHUB_TOKEN")
+                    ?: project.findProperty("gpr.key") as String?
             }
         }
     }
@@ -130,7 +131,7 @@ publishing {
         create<MavenPublication>("maven") {
             artifactId = "MultiMessageBridge"
             version =
-                if (gradle.startParameter.taskNames.contains("publishRelease")) project.version.toString() else getVersionWithBuildNumber()
+                if (isReleaseBuild()) project.version.toString() else getVersionWithBuildNumber()
             from(components["java"])
             artifact(tasks.kotlinSourcesJar)
         }
