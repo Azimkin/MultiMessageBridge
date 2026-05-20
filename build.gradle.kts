@@ -118,7 +118,10 @@ publishing {
     repositories {
         maven {
             name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/Azimkin/MultiMessageBridge")
+            val ghRepo = (project.findProperty("githubRepository") as String?)
+                ?: System.getenv("GITHUB_REPOSITORY")
+                ?: "Azimkin/MultiMessageBridge"
+            url = uri("https://maven.pkg.github.com/$ghRepo")
             credentials {
                 username = System.getenv("GITHUB_ACTOR")
                     ?: project.findProperty("gpr.user") as String?
