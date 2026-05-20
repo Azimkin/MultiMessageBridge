@@ -132,7 +132,7 @@ publishing {
     }
     publications {
         create<MavenPublication>("maven") {
-            artifactId = "MultiMessageBridge"
+            artifactId = "multimessagebridge"
             version =
                 if (isReleaseBuild()) project.version.toString() else getVersionWithBuildNumber()
             from(components["java"])
