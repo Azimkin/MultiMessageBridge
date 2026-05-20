@@ -19,7 +19,7 @@ object Translator {
         .flattener(
             ComponentFlattener.textOnly()
                 .toBuilder()
-                .mapper<TranslatableComponent>(TranslatableComponent::class.java) { component ->
+                .mapper(TranslatableComponent::class.java) { component ->
                     return@mapper (translations[component.key()] ?: component.fallback() ?: component.key()).toString()
                         .format(*(component.args().map { translate(it) }).toTypedArray())
                 }.build()

@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "top.azimkin"
-version = "0.5.1"
+version = "0.5.2"
 
 fun getVersionWithBuildNumber(): String {
     val buildFile = File("buildnumber.properties")
@@ -26,29 +26,8 @@ fun getVersionWithBuildNumber(): String {
     return "$currentVersion-b$buildNumber"
 }
 
-repositories {
-    mavenCentral()
-    maven("https://repo.papermc.io/repository/maven-public/") {
-        name = "papermc-repo"
-    }
-    maven("https://oss.sonatype.org/content/groups/public/") {
-        name = "sonatype"
-    }
-    maven("https://repo.codemc.org/repository/maven-public/") {
-        name = "codemc"
-    }
-    maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
-    maven {
-        name = "azimkinReleases"
-        url = uri("https://repo.azimkin.dev/releases")
-    }
-    maven("https://jitpack.io")
-
-    maven("https://storehouse.okaeri.eu/repository/maven-public/")
-}
-
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
+    compileOnly("io.papermc.paper:paper-api:1.20.4-R0.1-SNAPSHOT")
     implementation("com.github.pengrad:java-telegram-bot-api:9.6.0")
     implementation("eu.okaeri:okaeri-configs-yaml-bukkit:5.0.13")
     implementation("com.j256.ormlite:ormlite-jdbc:6.1")
@@ -56,6 +35,8 @@ dependencies {
     compileOnly("com.github.MilkBowl:VaultAPI:1.7.1")
     compileOnly("net.luckperms:api:5.5")
     compileOnly("me.clip:placeholderapi:2.12.2")
+    compileOnly("com.github.TheJeterLP:ChatEx:v3.2.2")
+    compileOnly("net.essentialsx:EssentialsX:2.20.0")
     compileOnly(fileTree("./libs") { include("*.jar") })
     compileOnly("com.discord4j:discord4j-core:3.3.2")
     implementation("me.scarsz.jdaappender:discord4j:1.2.4") {
@@ -65,10 +46,10 @@ dependencies {
 
     // tests
     testImplementation(kotlin("test"))
-    testImplementation("io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT")
+    testImplementation("io.papermc.paper:paper-api:1.20.4-R0.1-SNAPSHOT")
 }
 
-val targetJavaVersion = 21
+val targetJavaVersion = 17
 kotlin {
     jvmToolchain(targetJavaVersion)
 }
