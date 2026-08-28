@@ -2,13 +2,13 @@ import java.util.*
 
 plugins {
     kotlin("jvm") version "2.3.20"
-    id("com.gradleup.shadow") version "9.4.1"
+    id("com.gradleup.shadow") version "8.3.9"
     id("xyz.jpenilla.run-paper") version "3.0.2"
     id("maven-publish")
 }
 
 group = "top.azimkin"
-version = "0.5.2"
+version = "6.0"
 
 fun getVersionWithBuildNumber(): String {
     val buildFile = File("buildnumber.properties")
@@ -28,7 +28,7 @@ fun getVersionWithBuildNumber(): String {
 
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.20.4-R0.1-SNAPSHOT")
-    implementation("com.github.pengrad:java-telegram-bot-api:9.6.0")
+    implementation("com.github.pengrad:java-telegram-bot-api:10.1.0")
     implementation("eu.okaeri:okaeri-configs-yaml-bukkit:5.0.13")
     implementation("com.j256.ormlite:ormlite-jdbc:6.1")
 
@@ -38,9 +38,9 @@ dependencies {
     compileOnly("com.github.TheJeterLP:ChatEx:v3.2.2")
     compileOnly("net.essentialsx:EssentialsX:2.20.0")
     compileOnly(fileTree("./libs") { include("*.jar") })
-    compileOnly("com.discord4j:discord4j-core:3.3.2")
+    implementation("com.discord4j:discord4j-core:3.3.3")
     implementation("me.scarsz.jdaappender:discord4j:1.2.4") {
-        exclude(group = "discord4j", module = "discord4j")
+        exclude(group = "com.discord4j")
     }
 
 
@@ -60,7 +60,7 @@ java {
 
 tasks {
     runServer {
-        minecraftVersion("1.21.11")
+        minecraftVersion("1.20.4")
     }
 
     processResources {
@@ -79,6 +79,13 @@ tasks {
     }
 
     shadowJar {
+        dependsOn(":versions:post26:jar")
+        from({
+            zipTree(
+                project(":versions:post26").tasks.named<Jar>("jar").get().archiveFile.get().asFile
+            )
+        })
+
         manifest {
             attributes["paperweight-mappings-namespace"] = "mojang"
         }

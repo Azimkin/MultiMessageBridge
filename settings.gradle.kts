@@ -3,6 +3,8 @@ import org.gradle.kotlin.dsl.mavenCentral
 
 rootProject.name = "MultiMessageBridge"
 
+include("versions:post26")
+
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {

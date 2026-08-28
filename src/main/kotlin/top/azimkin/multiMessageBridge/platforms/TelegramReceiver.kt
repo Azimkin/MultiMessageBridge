@@ -31,10 +31,10 @@ class TelegramReceiver(val em: MessagingEventManager) :
     MessageHandler, AdvancementHandler,
     MessageDispatcher, PlayerLifeHandler, SessionHandler, ServerSessionHandler {
     val token = config.bot.token
-    var updateErrorsInPeriod: Int = 0
     val bot: TelegramBot
 
     init {
+        var updateErrorsInPeriod = 0
         if (TOKEN_PATTERN.matcher(token).matches()) bot = TelegramBot(token).also {
             it.setUpdatesListener({ updates ->
                 for (update in updates) {
@@ -42,7 +42,7 @@ class TelegramReceiver(val em: MessagingEventManager) :
                 }
                 updateErrorsInPeriod = 0
                 return@setUpdatesListener UpdatesListener.CONFIRMED_UPDATES_ALL
-            }) { _ ->
+            }) { e ->
                 updateErrorsInPeriod++
                 if (updateErrorsInPeriod % 10 == 0)
                     MultiMessageBridge.inst.logger.warning("Unable to get updates from telegram API!\nErrors in period: $updateErrorsInPeriod")
