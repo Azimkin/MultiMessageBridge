@@ -1,14 +1,14 @@
 import java.util.*
 
 plugins {
-    kotlin("jvm") version "2.0.20"
-    id("com.gradleup.shadow") version "9.0.0-beta13"
-    id("xyz.jpenilla.run-paper") version "2.3.1"
+    kotlin("jvm") version "2.3.20"
+    id("com.gradleup.shadow") version "8.3.9"
+    id("xyz.jpenilla.run-paper") version "3.0.2"
     id("maven-publish")
 }
 
 group = "top.azimkin"
-version = "0.5.1"
+version = "6.0"
 
 fun getVersionWithBuildNumber(): String {
     val buildFile = File("buildnumber.properties")
@@ -26,46 +26,27 @@ fun getVersionWithBuildNumber(): String {
     return "$currentVersion-b$buildNumber"
 }
 
-repositories {
-    mavenCentral()
-    maven("https://repo.papermc.io/repository/maven-public/") {
-        name = "papermc-repo"
-    }
-    maven("https://oss.sonatype.org/content/groups/public/") {
-        name = "sonatype"
-    }
-    maven("https://repo.codemc.org/repository/maven-public/") {
-        name = "codemc"
-    }
-    maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
-    maven {
-        name = "fairkorReleases"
-        url = uri("https://repo.fairkor.pro/releases")
-    }
-    maven("https://jitpack.io")
-
-    maven("https://storehouse.okaeri.eu/repository/maven-public/")
-}
-
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:1.19.4-R0.1-SNAPSHOT")
-    implementation("com.github.pengrad:java-telegram-bot-api:7.9.1")
-    implementation("eu.okaeri:okaeri-configs-yaml-bukkit:5.0.5")
+    compileOnly("io.papermc.paper:paper-api:1.20.4-R0.1-SNAPSHOT")
+    implementation("com.github.pengrad:java-telegram-bot-api:10.1.0")
+    implementation("eu.okaeri:okaeri-configs-yaml-bukkit:5.0.13")
     implementation("com.j256.ormlite:ormlite-jdbc:6.1")
 
     compileOnly("com.github.MilkBowl:VaultAPI:1.7.1")
-    compileOnly("net.luckperms:api:5.4")
-    compileOnly("me.clip:placeholderapi:2.11.6")
+    compileOnly("net.luckperms:api:5.5")
+    compileOnly("me.clip:placeholderapi:2.12.2")
+    compileOnly("com.github.TheJeterLP:ChatEx:v3.2.2")
+    compileOnly("net.essentialsx:EssentialsX:2.20.0")
     compileOnly(fileTree("./libs") { include("*.jar") })
-    compileOnly("com.discord4j:discord4j-core:3.2.9")
-    implementation("me.scarsz.jdaappender:discord4j:1.2.4.3") {
-        exclude(group = "discord4j", module = "discord4j")
+    implementation("com.discord4j:discord4j-core:3.3.3")
+    implementation("me.scarsz.jdaappender:discord4j:1.2.4") {
+        exclude(group = "com.discord4j")
     }
 
 
     // tests
     testImplementation(kotlin("test"))
-    testImplementation("io.papermc.paper:paper-api:1.19.4-R0.1-SNAPSHOT")
+    testImplementation("io.papermc.paper:paper-api:1.20.4-R0.1-SNAPSHOT")
 }
 
 val targetJavaVersion = 17
@@ -79,7 +60,7 @@ java {
 
 tasks {
     runServer {
-        minecraftVersion("1.19.4")
+        minecraftVersion("1.20.4")
     }
 
     processResources {
@@ -98,6 +79,13 @@ tasks {
     }
 
     shadowJar {
+        dependsOn(":versions:post26:jar")
+        from({
+            zipTree(
+                project(":versions:post26").tasks.named<Jar>("jar").get().archiveFile.get().asFile
+            )
+        })
+
         manifest {
             attributes["paperweight-mappings-namespace"] = "mojang"
         }
@@ -129,29 +117,55 @@ tasks {
     }
 }
 
+fun isReleaseBuild(): Boolean =
+    gradle.startParameter.taskNames.contains("publishRelease") ||
+        project.findProperty("release") == "true"
+
 publishing {
     repositories {
         maven {
-            if (gradle.startParameter.taskNames.contains("publishRelease")) {
-                name = "fairkorReleases"
-                url = uri("https://repo.fairkor.pro/releases")
-            } else {
-                name = "fairkorSnapshots"
-                url = uri("https://repo.fairkor.pro/snapshots")
-            }
-            credentials(PasswordCredentials::class)
-            authentication {
-                create<BasicAuthentication>("basic")
+            name = "GitHubPackages"
+            val ghRepo = (project.findProperty("githubRepository") as String?)
+                ?: System.getenv("GITHUB_REPOSITORY")
+                ?: "Azimkin/MultiMessageBridge"
+            url = uri("https://maven.pkg.github.com/$ghRepo")
+            credentials {
+                username = System.getenv("GITHUB_ACTOR")
+                    ?: project.findProperty("gpr.user") as String?
+                password = System.getenv("GITHUB_TOKEN")
+                    ?: project.findProperty("gpr.key") as String?
             }
         }
     }
     publications {
         create<MavenPublication>("maven") {
-            artifactId = "MultiMessageBridge"
+            artifactId = "multimessagebridge"
             version =
-                if (gradle.startParameter.taskNames.contains("publishRelease")) project.version.toString() else getVersionWithBuildNumber()
+                if (isReleaseBuild()) project.version.toString() else getVersionWithBuildNumber()
             from(components["java"])
             artifact(tasks.kotlinSourcesJar)
+            pom {
+                name.set("MultiMessageBridge")
+                description.set("Cross-platform chat bridge for Minecraft, Discord and Telegram")
+                url.set("https://github.com/Azimkin/MultiMessageBridge")
+                licenses {
+                    license {
+                        name.set("MIT License")
+                        url.set("https://github.com/Azimkin/MultiMessageBridge/blob/main/LICENSE")
+                    }
+                }
+                developers {
+                    developer {
+                        id.set("azimkin")
+                        name.set("Azimkin")
+                    }
+                }
+                scm {
+                    url.set("https://github.com/Azimkin/MultiMessageBridge")
+                    connection.set("scm:git:git://github.com/Azimkin/MultiMessageBridge.git")
+                    developerConnection.set("scm:git:ssh://github.com/Azimkin/MultiMessageBridge.git")
+                }
+            }
         }
     }
 }

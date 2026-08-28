@@ -5,6 +5,7 @@ import com.pengrad.telegrambot.TelegramBot
 import com.pengrad.telegrambot.UpdatesListener
 import com.pengrad.telegrambot.model.Update
 import com.pengrad.telegrambot.model.request.InputMediaPhoto
+import com.pengrad.telegrambot.model.request.ReplyParameters
 import com.pengrad.telegrambot.request.GetFile
 import com.pengrad.telegrambot.request.SendMediaGroup
 import com.pengrad.telegrambot.request.SendMessage
@@ -30,10 +31,10 @@ class TelegramReceiver(val em: MessagingEventManager) :
     MessageHandler, AdvancementHandler,
     MessageDispatcher, PlayerLifeHandler, SessionHandler, ServerSessionHandler {
     val token = config.bot.token
-    var updateErrorsInPeriod: Int = 0
     val bot: TelegramBot
 
     init {
+        var updateErrorsInPeriod = 0
         if (TOKEN_PATTERN.matcher(token).matches()) bot = TelegramBot(token).also {
             it.setUpdatesListener({ updates ->
                 for (update in updates) {
@@ -41,7 +42,7 @@ class TelegramReceiver(val em: MessagingEventManager) :
                 }
                 updateErrorsInPeriod = 0
                 return@setUpdatesListener UpdatesListener.CONFIRMED_UPDATES_ALL
-            }) { _ ->
+            }) { e ->
                 updateErrorsInPeriod++
                 if (updateErrorsInPeriod % 10 == 0)
                     MultiMessageBridge.inst.logger.warning("Unable to get updates from telegram API!\nErrors in period: $updateErrorsInPeriod")
@@ -112,7 +113,7 @@ class TelegramReceiver(val em: MessagingEventManager) :
             bot.execute(
                 SendMediaGroup(config.bot.mainChat, *mediaItems.toTypedArray()).apply {
                     if (config.bot.mainThread > -1) messageThreadId(config.bot.mainThread)
-                    if (replyToMessageId != null) replyToMessageId(replyToMessageId)
+                    if (replyToMessageId != null) replyParameters(ReplyParameters(replyToMessageId))
                 },
                 object : Callback<SendMediaGroup, MessagesResponse> {
                     override fun onResponse(request: SendMediaGroup?, response: MessagesResponse?) {
@@ -136,7 +137,7 @@ class TelegramReceiver(val em: MessagingEventManager) :
             bot.execute(
                 SendMessage(config.bot.mainChat, text).apply {
                     if (config.bot.mainThread > -1) messageThreadId(config.bot.mainThread)
-                    if (replyToMessageId != null) replyToMessageId(replyToMessageId)
+                    if (replyToMessageId != null) replyParameters(ReplyParameters(replyToMessageId))
                 },
                 object : Callback<SendMessage, SendResponse> {
                     override fun onResponse(request: SendMessage?, response: SendResponse?) {

@@ -3,13 +3,14 @@ package top.azimkin.multiMessageBridge.platforms.discord
 import discord4j.common.util.Snowflake
 import discord4j.core.GatewayDiscordClient
 import discord4j.core.event.domain.message.MessageCreateEvent
+import discord4j.core.`object`.emoji.Emoji
 import discord4j.core.`object`.entity.Member
 import discord4j.core.`object`.entity.channel.GuildMessageChannel
 import discord4j.core.`object`.entity.channel.TextChannel
-import discord4j.core.`object`.reaction.ReactionEmoji
 import discord4j.core.spec.EmbedCreateFields.Author
 import discord4j.core.spec.EmbedCreateSpec
 import discord4j.core.spec.TextChannelEditSpec
+import discord4j.core.spec.legacy.LegacyMessageCreateSpec
 import discord4j.rest.util.Permission
 import me.scarsz.jdaappender.ChannelLoggingHandler
 import reactor.core.publisher.Mono
@@ -150,7 +151,7 @@ class DiscordReceiver(val em: MessagingEventManager) :
             val headUrl = MultiMessageBridge.inst.headProvider.getHeadUrl(author)
             textChannel.createMessage(
                 EmbedCreateSpec.create()
-                    .withAuthor(Author.of(message, null, headUrl))
+                    .withAuthor(Author.of(author, null, headUrl))
                     .withColor(discord4j.rest.util.Color.of(color.red, color.green, color.blue))
             ).subscribe()
         }
@@ -158,17 +159,16 @@ class DiscordReceiver(val em: MessagingEventManager) :
     fun sendMessageToChannel(message: String, channel: String = "main_text", replyId: Long? = null): Long? {
         val channel = findChannel(channel)?.id ?: return null
         val textChannel = getChannelBlocking(channel) ?: return null
-        var spec = textChannel.createMessage(message).withContent(message)
-        if (replyId != null) {
-            val id = Snowflake.of(replyId)
-            try {
-                spec = spec.withMessageReferenceId(id)
-            } catch (e: Throwable) {
-                e.printStackTrace()
-            }
-        }
-        val message = spec.block()
-        return message?.id?.asLong()
+        val sentMessage =
+            if (replyId != null) {
+                textChannel.createMessage { spec: LegacyMessageCreateSpec ->
+                    spec.setContent(message)
+                    spec.setMessageReference(Snowflake.of(replyId))
+                }
+            } else {
+                textChannel.createMessage(message)
+            }.block()
+        return sentMessage?.id?.asLong()
     }
 
     private fun getChannelBlocking(id: Long) = client.get().getChannelById(Snowflake.of(id))
@@ -191,7 +191,7 @@ class DiscordReceiver(val em: MessagingEventManager) :
 
         var attachment = false
         for (atchmnt in event.message.attachments) {
-            if (!(atchmnt.contentType.getOrNull()?.startsWith("image") ?: true)) {
+            if (!(atchmnt.contentType.getOrNull()?.startsWith("image") ?: false)) {
                 attachment = true
                 break
             }
@@ -229,7 +229,7 @@ class DiscordReceiver(val em: MessagingEventManager) :
                 val res = isUserAllowedToSendCommand(command, author)
                 if (res) dispatch(ConsoleMessageContext(command))
                 if (config.console.reactOnCommandWithSendResult)
-                    event.message.addReaction(ReactionEmoji.unicode(if (res) "✅" else "❌")).subscribe()
+                    event.message.addReaction(Emoji.unicode(if (res) "✅" else "❌")).subscribe()
             }
         }
     }
